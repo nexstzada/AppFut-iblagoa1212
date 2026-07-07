@@ -95,46 +95,7 @@
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBmnlVQGJb2PTjGgnYtg_eJw9eFBWOAnEc",
-            authDomain: "gerenciadorpelada.firebaseapp.com",
-            projectId: "gerenciadorpelada",
-            storageBucket: "gerenciadorpelada.firebasestorage.app",
-            messagingSenderId: "307088239919",
-            appId: "1:307088239919:web:1805ca9ca89fa999e945da",
-            measurementId: "G-V7NFZD6HWT"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-
-        // AQUI COMEÇA A PONTE CORRIGIDA
-        window.fs = {
-            loadInitialData: async () => {
-                // Verifica se o Firebase já carregou
-                if (typeof firebase === 'undefined') {
-                    console.error("Firebase ainda não carregou!");
-                    return;
-                }
-                const db = firebase.firestore();
-                
-                const doc = await db.collection("competicao").doc("stats").get();
-                if (doc.exists) {
-                    const dados = doc.data();
-                    window.dispatchEvent(new CustomEvent('firestorePlayersUpdated', { detail: dados }));
-                }
-                window.dispatchEvent(new CustomEvent('firestoreInitialDataLoaded'));
-            },
-            
-            saveAllPlayers: async (dados) => {
-                if (typeof firebase === 'undefined') return;
-                const db = firebase.firestore();
-                await db.collection("competicao").doc("stats").set(dados);
-            }
-        };
-        // AQUI TERMINA A PONTE
-    </script>
+    <script src="Script.js"></script>
 </head>
 <body>
 
@@ -2030,4 +1991,3 @@
     </script>
 </body>
 </html>
-
