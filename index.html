@@ -93,7 +93,48 @@
         .editor-agendamento { margin-top: 12px; background: white; border: 1px solid #dbeafe; border-radius: 10px; padding: 12px; }
         .editor-agendamento input { width: 120px; }
     </style>
-    <script type="module" src="Script.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBmnlVQGJb2PTjGgnYtg_eJw9eFBWOAnEc",
+            authDomain: "gerenciadorpelada.firebaseapp.com",
+            projectId: "gerenciadorpelada",
+            storageBucket: "gerenciadorpelada.firebasestorage.app",
+            messagingSenderId: "307088239919",
+            appId: "1:307088239919:web:1805ca9ca89fa999e945da",
+            measurementId: "G-V7NFZD6HWT"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        // AQUI COMEÇA A PONTE CORRIGIDA
+        window.fs = {
+            loadInitialData: async () => {
+                // Verifica se o Firebase já carregou
+                if (typeof firebase === 'undefined') {
+                    console.error("Firebase ainda não carregou!");
+                    return;
+                }
+                const db = firebase.firestore();
+                
+                const doc = await db.collection("competicao").doc("stats").get();
+                if (doc.exists) {
+                    const dados = doc.data();
+                    window.dispatchEvent(new CustomEvent('firestorePlayersUpdated', { detail: dados }));
+                }
+                window.dispatchEvent(new CustomEvent('firestoreInitialDataLoaded'));
+            },
+            
+            saveAllPlayers: async (dados) => {
+                if (typeof firebase === 'undefined') return;
+                const db = firebase.firestore();
+                await db.collection("competicao").doc("stats").set(dados);
+            }
+        };
+        // AQUI TERMINA A PONTE
+    </script>
 </head>
 <body>
 
@@ -133,7 +174,23 @@
             </div>
         </div>
         <div id="selecaoCadastro" class="admin-only" style="display:none;">
-            <button class="btn-green" onclick="abrirModalCadastroJogador()">➕ Adicionar Jogador</button>
+            <input type="text" id="novoNome" placeholder="Nome">
+            <input type="file" id="fotoInput" accept="image/*">
+            <select id="novaEquipe">
+                <option value="">Selecione a Equipe</option>
+                <option value="Equipe 1">Equipe 1</option>
+                <option value="Equipe 2">Equipe 2</option>
+                <option value="Equipe 3">Equipe 3</option>
+                <option value="Equipe 4">Equipe 4</option>
+                <option value="Equipe 5">Equipe 5</option>
+                <option value="Equipe 6">Equipe 6</option>
+                <option value="Equipe 7">Equipe 7</option>
+                <option value="Equipe 8">Equipe 8</option>
+                <option value="Equipe 9">Equipe 9</option>
+                <option value="Equipe 10">Equipe 10</option>
+                <option value="Equipe 11">Equipe 11</option>
+            </select>
+            <button class="btn-blue" onclick="cadastrarJogador()">Cadastrar</button>
         </div>
         <button class="btn-orange" onclick="abrirRelatorios()">📊 Ver Relatórios</button>
         <div id="selecaoGerenciamento" class="admin-only" style="display:none;">
@@ -248,41 +305,6 @@
         <button class="btn-red" onclick="voltarMenu()">Voltar ao Menu 🔙</button>
     </div>
 
-    <div id="modalCadastroJogador" class="modal-edicao">
-        <div class="modal-conteudo">
-            <div class="modal-header">
-                <h3 style="margin: 0;">Adicionar Jogador</h3>
-                <button class="btn-red btn-xs" onclick="fecharModalCadastroJogador()">✕</button>
-            </div>
-            <div style="text-align:center; margin-bottom:12px;">
-                <img id="previewFotoCadastro" class="preview-foto" src="https://via.placeholder.com/100" alt="Foto do jogador">
-            </div>
-            <label for="cadastroFotoInput">Foto do jogador (opcional):</label>
-            <input type="file" id="cadastroFotoInput" accept="image/*" onchange="previsualizarFotoCadastro(this)">
-            <label for="cadastroNome">Nome:</label>
-            <input type="text" id="cadastroNome" style="width: 100%; box-sizing: border-box;" placeholder="Nome completo do jogador">
-            <label for="cadastroEquipe" style="display:block; margin-top:10px;">Equipe:</label>
-            <select id="cadastroEquipe" style="width: 100%; box-sizing: border-box;">
-                <option value="">Sem equipe</option>
-                <option value="Equipe 1">Equipe 1</option>
-                <option value="Equipe 2">Equipe 2</option>
-                <option value="Equipe 3">Equipe 3</option>
-                <option value="Equipe 4">Equipe 4</option>
-                <option value="Equipe 5">Equipe 5</option>
-                <option value="Equipe 6">Equipe 6</option>
-                <option value="Equipe 7">Equipe 7</option>
-                <option value="Equipe 8">Equipe 8</option>
-                <option value="Equipe 9">Equipe 9</option>
-                <option value="Equipe 10">Equipe 10</option>
-                <option value="Equipe 11">Equipe 11</option>
-            </select>
-            <div style="display:flex; gap:8px; margin-top:15px; flex-wrap:wrap;">
-                <button class="btn-blue" onclick="salvarCadastroJogador()">Salvar</button>
-                <button class="btn-red" onclick="fecharModalCadastroJogador()">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
     <div id="modalEditarJogador" class="modal-edicao">
         <div class="modal-conteudo">
             <div class="modal-header">
@@ -293,7 +315,7 @@
                 <img id="previewFotoEdicao" class="preview-foto" src="https://via.placeholder.com/100" alt="Foto do jogador">
             </div>
             <label for="editarFotoInput">Foto do jogador:</label>
-            <input type="file" id="editarFotoInput" accept="image/*" onchange="previsualizarFotoEdicao(this)">
+            <input type="file" id="editarFotoInput" accept="image/*">
             <div style="margin: 8px 0 12px;">
                 <button class="btn-orange btn-xs" onclick="removerFotoJogadorEdicao()">Remover Foto</button>
             </div>
@@ -491,12 +513,6 @@
                 .replace(/>/g, '&gt;')
                 .replace(/\"/g, '&quot;')
                 .replace(/'/g, '&#39;');
-        }
-
-        function escaparParaAtributoJs(texto) {
-            return String(texto ?? '')
-                .replace(/\\/g, '\\\\')
-                .replace(/'/g, "\\'");
         }
 
         function normalizarJogador(nome, dados = {}) {
@@ -872,14 +888,14 @@
                     equipes[equipe].forEach(nome => {
                         const p = normalizarJogador(nome, jogadoresStats[nome]);
                         const isSelected = selecionados.includes(nome);
-                        const nomeEscapado = escaparParaAtributoJs(nome);
+                        const nomeJson = JSON.stringify(nome);
                         grid.innerHTML += `<div class="card">
                             <img src="${p.foto || 'https://via.placeholder.com/100'}" alt="${escapeHtml(nome)}">
                             <h3>${escapeHtml(nome)}</h3>
                             <p>J: ${p.partidas || 0} | Fora: ${p.fora || 0}</p>
                             <div class="acoes-card">
-                                ${modoAdministrador ? `<button class="${isSelected ? 'btn-red' : 'btn-green'} btn-xs" onclick="toggleSelecao('${nomeEscapado}', this)">${isSelected ? '-' : '+'}</button>` : `<div style="color:#999;font-size:12px;">Somente leitura</div>`}
-                                ${modoAdministrador ? `<button class="btn-blue btn-xs" onclick="abrirModalEdicaoJogador('${nomeEscapado}')">✎</button>` : ''}
+                                ${modoAdministrador ? `<button class="${isSelected ? 'btn-red' : 'btn-green'} btn-xs" onclick="toggleSelecao(${nomeJson}, this)">${isSelected ? '-' : '+'}</button>` : `<div style="color:#999;font-size:12px;">Somente leitura</div>`}
+                                ${modoAdministrador ? `<button class="btn-blue btn-xs" onclick="abrirModalEdicaoJogador(${nomeJson})">✎</button>` : ''}
                             </div>
                         </div>`;
                     });
@@ -1528,7 +1544,6 @@
                         const jogador = normalizarJogador(nome, jogadoresStats[nome]);
                         const div = document.createElement('div');
                         div.className = 'jogador-gerenciar';
-                        const nomeEscapado = escaparParaAtributoJs(nome);
                         div.innerHTML = `
                             <div class="jogador-info" style="display:flex; align-items:center;">
                                 <img class="foto-gerenciar" src="${jogador.foto || 'https://via.placeholder.com/44'}" alt="${escapeHtml(nome)}">
@@ -1538,9 +1553,9 @@
                                 </div>
                             </div>
                             <div class="botoes-acao">
-                                ${modoAdministrador ? `<button class="btn-red btn-xs" onclick="removerDeEquipe('${nomeEscapado}')">Remover</button>
-                                <button class="btn-blue btn-xs" onclick="selecionarTroca('${nomeEscapado}')">Trocar</button>
-                                <button class="btn-orange btn-xs" onclick="abrirModalEdicaoJogador('${nomeEscapado}')">Editar</button>` : '<span style="color:#999;font-size:12px;">Somente leitura</span>'}
+                                ${modoAdministrador ? `<button class="btn-red btn-xs" onclick="removerDeEquipe(${JSON.stringify(nome)})">Remover</button>
+                                <button class="btn-blue btn-xs" onclick="selecionarTroca(${JSON.stringify(nome)})">Trocar</button>
+                                <button class="btn-orange btn-xs" onclick="abrirModalEdicaoJogador(${JSON.stringify(nome)})">Editar</button>` : '<span style="color:#999;font-size:12px;">Somente leitura</span>'}
                             </div>
                         `;
                         lista.appendChild(div);
@@ -1566,7 +1581,6 @@
                     const jogador = normalizarJogador(nome, jogadoresStats[nome]);
                     const div = document.createElement('div');
                     div.className = 'jogador-gerenciar';
-                    const nomeEscapado = escaparParaAtributoJs(nome);
                     div.innerHTML = `
                         <div class="jogador-info" style="display:flex; align-items:center;">
                             <img class="foto-gerenciar" src="${jogador.foto || 'https://via.placeholder.com/44'}" alt="${escapeHtml(nome)}">
@@ -1576,80 +1590,12 @@
                             </div>
                         </div>
                         <div class="botoes-acao">
-                            ${modoAdministrador ? `<button class="btn-green btn-xs" onclick="adicionarAEquipe('${nomeEscapado}')">Adicionar</button>
-                            <button class="btn-orange btn-xs" onclick="abrirModalEdicaoJogador('${nomeEscapado}')">Editar</button>` : '<span style="color:#999;font-size:12px;">Somente leitura</span>'}
+                            ${modoAdministrador ? `<button class="btn-green btn-xs" onclick="adicionarAEquipe(${JSON.stringify(nome)})">Adicionar</button>
+                            <button class="btn-orange btn-xs" onclick="abrirModalEdicaoJogador(${JSON.stringify(nome)})">Editar</button>` : '<span style="color:#999;font-size:12px;">Somente leitura</span>'}
                         </div>
                     `;
                     listaReservas.appendChild(div);
                 });
-            }
-        }
-
-        function abrirModalCadastroJogador() {
-            if (!verificarPermissao('cadastro de jogadores')) return;
-
-            document.getElementById('cadastroNome').value = '';
-            document.getElementById('cadastroEquipe').value = '';
-            document.getElementById('cadastroFotoInput').value = '';
-            document.getElementById('previewFotoCadastro').src = 'https://via.placeholder.com/100';
-            document.getElementById('modalCadastroJogador').style.display = 'flex';
-        }
-
-        function fecharModalCadastroJogador() {
-            document.getElementById('modalCadastroJogador').style.display = 'none';
-        }
-
-        function previsualizarFotoCadastro(input) {
-            const preview = document.getElementById('previewFotoCadastro');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => preview.src = e.target.result;
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function salvarCadastroJogador() {
-            if (!verificarPermissao('cadastro de jogadores')) return;
-
-            const nome = document.getElementById('cadastroNome').value.trim();
-            const equipe = document.getElementById('cadastroEquipe').value;
-            const arquivo = document.getElementById('cadastroFotoInput').files[0];
-
-            if (!nome) {
-                alert('Informe o nome do jogador.');
-                return;
-            }
-            if (jogadoresStats[nome]) {
-                alert('Já existe um jogador com este nome.');
-                return;
-            }
-            if (equipe && contarJogadoresEquipe(equipe) >= MAX_JOGADORES_POR_EQUIPE) {
-                alert(`${equipe} já atingiu o limite de 3 jogadores.`);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                jogadoresStats[nome] = normalizarJogador(nome, {
-                    foto: e.target.result,
-                    equipe: equipe
-                });
-                salvar();
-                renderizarGrid();
-                renderizarGerenciamento();
-                fecharModalCadastroJogador();
-                alert('Jogador cadastrado com sucesso!');
-            };
-
-            if (arquivo) {
-                reader.readAsDataURL(arquivo);
-            } else {
-                jogadoresStats[nome] = normalizarJogador(nome, { foto: '', equipe: equipe });
-                salvar();
-                renderizarGrid();
-                renderizarGerenciamento();
-                fecharModalCadastroJogador();
-                alert('Jogador cadastrado com sucesso!');
             }
         }
 
@@ -1688,18 +1634,6 @@
             jogadorEmEdicao = null;
             fotoTemporariaEdicao = null;
             document.getElementById('modalEditarJogador').style.display = 'none';
-        }
-
-        function previsualizarFotoEdicao(input) {
-            const preview = document.getElementById('previewFotoEdicao');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    fotoTemporariaEdicao = e.target.result;
-                    preview.src = e.target.result;
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
         }
 
         function removerFotoJogadorEdicao() {
@@ -1989,3 +1923,4 @@
     </script>
 </body>
 </html>
+
