@@ -466,13 +466,33 @@
                 await salvarEstadoFirestore();
             },
             async resetAllData() {
+                if (cronometroInterval) {
+                    clearInterval(cronometroInterval);
+                    cronometroInterval = null;
+                }
+
                 jogadoresStats = {};
                 relatoriosDiarios = {};
                 historicoCompeticions = [];
                 configCalendario = { datas: {}, mesmoHorario: true };
                 competicaoAtiva = null;
+                selecionados = [];
                 estatisticasDia = {};
                 dataAtual = new Date().toISOString().split('T')[0];
+                cronometroRodando = false;
+                cronometroPausado = false;
+                partidaEncerrada = false;
+                tempoRestante = 420;
+                tempoAcrescimos = 0;
+                golsRegistrados = [];
+                eventosPartida = [];
+                configPartida = {
+                    duracao: 7,
+                    golsVitoria: 2,
+                    primeiraPartida: false,
+                    encerramentoAutomatico: true
+                };
+
                 await salvarEstadoFirestore();
             }
         };
@@ -494,8 +514,9 @@
     </script>
 
     <script>
-        // CONFIGURAÇÃO DO PIN
-        const PIN_ADMIN = "0507"; // PIN para finalizar partida
+        // CONFIGURAÇÃO DOS PINS
+        const PIN_ADMIN = "0507"; // PIN para acessar o painel administrativo
+        const PIN_EXCLUSAO_TOTAL = "02-29"; // PIN exclusivo para apagar todos os dados do sistema
         const MAX_JOGADORES_POR_EQUIPE = 3;
 
         let jogadoresStats = {};
@@ -1514,25 +1535,55 @@
                 console.error('Erro ao salvar no Firestore:', e);
             }
         }
-        function resetarTudo() { 
+        async function resetarTudo() { 
             if (!verificarPermissao('reset do sistema')) return;
 
-            if(confirm("ATENÇÃO!\n\nEsta ação apagará TODOS os dados do sistema.\n\nDeseja realmente continuar?")) { 
-                try {
-                    if (window.fs && window.fs.resetAllData) {
-                        window.fs.resetAllData().catch(()=>{});
-                    }
-                } catch(e) {}
-                selecionados = [];
-                jogadoresStats = {};
-                relatoriosDiarios = {};
-                historicoCompeticions = [];
-                configCalendario = { datas: {}, mesmoHorario: true };
-                competicaoAtiva = null;
-                estatisticasDia = {};
-                dataAtual = new Date().toISOString().split('T')[0];
-                location.reload();
-            } 
+            const pinDigitado = prompt(
+                '⚠️ Atenção!\n\nVocê está prestes a apagar permanentemente todos os dados do sistema.\nEsta ação não poderá ser desfeita.\n\nDigite o PIN de segurança para continuar:',
+                ''
+            );
+
+            if (pinDigitado === null) return;
+
+            if (pinDigitado.trim() !== PIN_EXCLUSAO_TOTAL) {
+                alert('PIN inválido. Nenhum dado foi apagado.');
+                return;
+            }
+
+            try {
+                if (window.fs && window.fs.resetAllData) {
+                    await window.fs.resetAllData();
+                }
+            } catch (e) {
+                console.error('Erro ao resetar tudo:', e);
+                alert('Não foi possível completar o reset. Tente novamente.');
+                return;
+            }
+
+            selecionados = [];
+            jogadoresStats = {};
+            relatoriosDiarios = {};
+            historicoCompeticions = [];
+            configCalendario = { datas: {}, mesmoHorario: true };
+            competicaoAtiva = null;
+            estatisticasDia = {};
+            dataAtual = new Date().toISOString().split('T')[0];
+            cronometroRodando = false;
+            cronometroPausado = false;
+            partidaEncerrada = false;
+            tempoRestante = 420;
+            tempoAcrescimos = 0;
+            golsRegistrados = [];
+            eventosPartida = [];
+            configPartida = {
+                duracao: 7,
+                golsVitoria: 2,
+                primeiraPartida: false,
+                encerramentoAutomatico: true
+            };
+
+            alert('Todos os dados foram apagados e o sistema voltou ao estado inicial.');
+            location.reload();
         }
         
         function abrirGerenciamento() {
