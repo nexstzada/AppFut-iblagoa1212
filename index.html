@@ -357,13 +357,31 @@
                         <div class="stat-card"><div class="stat-icon">⚽</div><div><div class="stat-title">Partidas</div><div class="stat-value" id="statsPartidas">0</div></div></div>
                     </div>
                     <div class="dashboard-grid gap-2">
-                        <div class="stat-card"><div class="stat-icon">⚽</div><div><div class="stat-title">Artilheiro</div><div class="stat-value" id="statsArtilheiro">—</div><div class="topbar-subtitle" id="statsArtilheiroDetalhes">0 gols</div></div></div>
-                        <div class="stat-card"><div class="stat-icon">🅰</div><div><div class="stat-title">Assistente</div><div class="stat-value" id="statsAssistente">—</div><div class="topbar-subtitle" id="statsAssistenteDetalhes">0 assistências</div></div></div>
+                        <div class="stat-card" style="flex-direction:row; align-items:center; gap:14px;">
+                            <img id="statsArtilheiroFoto" src="https://via.placeholder.com/72" alt="Artilheiro" style="width:72px;height:72px;border-radius:16px;object-fit:cover;">
+                            <div style="text-align:left; min-width:0;">
+                                <div class="stat-title">Artilheiro</div>
+                                <div class="stat-value" id="statsArtilheiro">—</div>
+                                <div class="topbar-subtitle" id="statsArtilheiroDetalhes">0 gols</div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="flex-direction:row; align-items:center; gap:14px;">
+                            <img id="statsAssistenteFoto" src="https://via.placeholder.com/72" alt="Assistente" style="width:72px;height:72px;border-radius:16px;object-fit:cover;">
+                            <div style="text-align:left; min-width:0;">
+                                <div class="stat-title">Assistente</div>
+                                <div class="stat-value" id="statsAssistente">—</div>
+                                <div class="topbar-subtitle" id="statsAssistenteDetalhes">0 assistências</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="dashboard-grid">
-                        <div class="stat-card"><div class="stat-icon">🕓</div><div><div class="stat-title">Última partida</div><div class="stat-value" id="statsUltimaPartida">—</div></div></div>
-                        <div class="stat-card"><div class="stat-icon">📊</div><div><div class="stat-title">Status</div><div class="stat-value" id="statsStatus">Em espera</div></div></div>
-                        <div class="stat-card"><div class="stat-icon">⚙</div><div><div class="stat-title">Modo</div><div class="stat-value" id="statsModo">Leitura</div></div></div>
+                    <div class="dashboard-grid-single">
+                        <div class="stat-card" style="display:flex; align-items:center; gap:14px;">
+                            <div style="flex:1; text-align:left;">
+                                <div class="stat-title">Última partida</div>
+                                <div class="stat-value" id="statsUltimaPartida">—</div>
+                                <div class="topbar-subtitle" id="statsUltimaPartidaHorario"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -545,6 +563,8 @@
                 competicaoAtiva,
                 selecionados: Array.isArray(selecionados) ? [...selecionados] : [],
                 estatisticasDia: JSON.parse(JSON.stringify(estatisticasDia || {})),
+                partidasDia: JSON.parse(JSON.stringify(partidasDia || [])),
+                ultimaPartida: JSON.parse(JSON.stringify(ultimaPartida || null)),
                 dataAtual
             };
             await db.collection("competicao").doc("stats").set(dadosStats, { merge: true });
@@ -560,6 +580,8 @@
             competicaoAtiva = dadosStats.competicaoAtiva || null;
             selecionados = Array.isArray(dadosStats.selecionados) ? [...dadosStats.selecionados] : [];
             estatisticasDia = JSON.parse(JSON.stringify(dadosStats.estatisticasDia || {}));
+            partidasDia = Array.isArray(dadosStats.partidasDia) ? JSON.parse(JSON.stringify(dadosStats.partidasDia)) : [];
+            ultimaPartida = dadosStats.ultimaPartida ? JSON.parse(JSON.stringify(dadosStats.ultimaPartida)) : null;
             dataAtual = dadosStats.dataAtual || dataAtual;
 
             window.dispatchEvent(new CustomEvent('firestoreInitialDataLoaded'));
@@ -580,7 +602,10 @@
                 jogadoresStats: {},
                 relatoriosDiarios: {},
                 historicoCompeticions: [],
-                competicaoAtiva: null
+                competicaoAtiva: null,
+                partidasDia: [],
+                ultimaPartida: null,
+                dataAtual: new Date().toISOString().split('T')[0]
             });
             await db.collection("competicao").doc("relatorios").set({ relatoriosDiarios: {} });
         }
@@ -626,6 +651,8 @@
                 selecionados = [];
                 selecionadosPartidaAtual = [];
                 estatisticasDia = {};
+                partidasDia = [];
+                ultimaPartida = null;
                 dataAtual = new Date().toISOString().split('T')[0];
                 cronometroRodando = false;
                 cronometroPausado = false;
@@ -653,6 +680,8 @@
             competicaoAtiva = dados.competicaoAtiva || null;
             selecionados = Array.isArray(dados.selecionados) ? [...dados.selecionados] : [];
             estatisticasDia = JSON.parse(JSON.stringify(dados.estatisticasDia || {}));
+            partidasDia = Array.isArray(dados.partidasDia) ? JSON.parse(JSON.stringify(dados.partidasDia)) : [];
+            ultimaPartida = dados.ultimaPartida ? JSON.parse(JSON.stringify(dados.ultimaPartida)) : null;
             dataAtual = dados.dataAtual || dataAtual;
 
             window.dispatchEvent(new CustomEvent('firestorePlayersUpdated', { detail: jogadoresStats }));
@@ -660,6 +689,7 @@
             window.dispatchEvent(new CustomEvent('firestoreHistoricoUpdated', { detail: historicoCompeticions }));
             window.dispatchEvent(new CustomEvent('firestoreEstadoUpdated', { detail: competicaoAtiva }));
             renderizarDashboardEstatisticas();
+            atualizarResumoDashboard();
         });
     </script>
 
@@ -676,6 +706,8 @@
         let selecionadosPartidaAtual = [];
         let dataAtual = new Date().toISOString().split('T')[0];
         let estatisticasDia = {};
+        let partidasDia = [];
+        let ultimaPartida = null;
         let competicaoAtiva = null;
         
         // Variáveis do cronômetro e partida
@@ -999,11 +1031,22 @@
         }
 
         function atualizarResumoDashboard() {
-            const jogadores = Object.keys(jogadoresStats || {}).filter(nome => jogadoresStats[nome]).map(nome => normalizarJogador(nome, jogadoresStats[nome]));
-            const equipesAtivas = new Set(jogadores.map(j => j.equipe).filter(Boolean)).size;
-            const artilheiro = [...jogadores].sort((a, b) => (Number(b.gols || 0) - Number(a.gols || 0)) || a.nome.localeCompare(b.nome, 'pt-BR'))[0];
-            const assistente = [...jogadores].sort((a, b) => (Number(b.assis || 0) - Number(a.assis || 0)) || a.nome.localeCompare(b.nome, 'pt-BR'))[0];
-            const relatorios = Object.keys(relatoriosDiarios || {});
+            const jogadores = Object.keys(estatisticasDia || {}).map(nome => ({
+                nome,
+                stats: normalizarJogador(nome, estatisticasDia[nome]),
+                perfil: normalizarJogador(nome, jogadoresStats[nome] || {})
+            }));
+            const jogadoresPorEquipe = obterJogadoresPorEquipe();
+            const equipesAtivas = Object.keys(jogadoresPorEquipe).filter(equipe => equipe !== 'Sem equipe' && jogadoresPorEquipe[equipe].length > 0).length;
+
+            const artilheiro = jogadores
+                .filter(j => Number(j.stats.gols || 0) > 0)
+                .sort((a, b) => (Number(b.stats.gols || 0) - Number(a.stats.gols || 0)) || a.nome.localeCompare(b.nome, 'pt-BR'))[0];
+            const assistente = jogadores
+                .filter(j => Number(j.stats.assis || 0) > 0)
+                .sort((a, b) => (Number(b.stats.assis || 0) - Number(a.stats.assis || 0)) || a.nome.localeCompare(b.nome, 'pt-BR'))[0];
+            const partidasDoDia = partidasDia.filter(partida => partida.data === dataAtual);
+            const ultima = ultimaPartida || (partidasDia.length ? partidasDia[partidasDia.length - 1] : null);
 
             const elementos = {
                 statsJogadores: document.getElementById('statsJogadores'),
@@ -1014,21 +1057,29 @@
                 statsAssistente: document.getElementById('statsAssistente'),
                 statsAssistenteDetalhes: document.getElementById('statsAssistenteDetalhes'),
                 statsUltimaPartida: document.getElementById('statsUltimaPartida'),
-                statsStatus: document.getElementById('statsStatus'),
-                statsModo: document.getElementById('statsModo'),
+                statsUltimaPartidaHorario: document.getElementById('statsUltimaPartidaHorario'),
+                statsArtilheiroFoto: document.getElementById('statsArtilheiroFoto'),
+                statsAssistenteFoto: document.getElementById('statsAssistenteFoto'),
                 heroBadge: document.getElementById('heroBadge')
             };
 
-            if (elementos.statsJogadores) elementos.statsJogadores.textContent = jogadores.length;
+            if (elementos.statsJogadores) elementos.statsJogadores.textContent = Object.keys(jogadoresStats || {}).length;
             if (elementos.statsEquipes) elementos.statsEquipes.textContent = equipesAtivas;
-            if (elementos.statsPartidas) elementos.statsPartidas.textContent = relatorios.length;
-            if (elementos.statsArtilheiro) elementos.statsArtilheiro.textContent = artilheiro ? artilheiro.nome : '—';
-            if (elementos.statsArtilheiroDetalhes) elementos.statsArtilheiroDetalhes.textContent = artilheiro ? `${Number(artilheiro.gols || 0)} gols` : '0 gols';
-            if (elementos.statsAssistente) elementos.statsAssistente.textContent = assistente ? assistente.nome : '—';
-            if (elementos.statsAssistenteDetalhes) elementos.statsAssistenteDetalhes.textContent = assistente ? `${Number(assistente.assis || 0)} assistências` : '0 assistências';
-            if (elementos.statsUltimaPartida) elementos.statsUltimaPartida.textContent = relatorios.length > 0 ? relatorios[relatorios.length - 1] : '—';
-            if (elementos.statsStatus) elementos.statsStatus.textContent = partidaEncerrada ? 'Encerrada' : (cronometroRodando ? 'Em andamento' : 'Em espera');
-            if (elementos.statsModo) elementos.statsModo.textContent = modoAdministrador ? 'Admin' : 'Leitura';
+            if (elementos.statsPartidas) elementos.statsPartidas.textContent = partidasDoDia.length;
+
+            if (elementos.statsArtilheiro) elementos.statsArtilheiro.textContent = artilheiro ? artilheiro.nome : 'Nenhum gol registrado.';
+            if (elementos.statsArtilheiroDetalhes) elementos.statsArtilheiroDetalhes.textContent = artilheiro ? `${Number(artilheiro.stats.gols || 0)} gols` : '';
+            if (elementos.statsArtilheiroFoto) elementos.statsArtilheiroFoto.src = artilheiro && artilheiro.perfil.foto ? artilheiro.perfil.foto : 'https://via.placeholder.com/72';
+            if (elementos.statsArtilheiroFoto) elementos.statsArtilheiroFoto.alt = artilheiro ? artilheiro.nome : 'Nenhum artilheiro';
+
+            if (elementos.statsAssistente) elementos.statsAssistente.textContent = assistente ? assistente.nome : 'Nenhuma assistência registrada.';
+            if (elementos.statsAssistenteDetalhes) elementos.statsAssistenteDetalhes.textContent = assistente ? `${Number(assistente.stats.assis || 0)} assistências` : '';
+            if (elementos.statsAssistenteFoto) elementos.statsAssistenteFoto.src = assistente && assistente.perfil.foto ? assistente.perfil.foto : 'https://via.placeholder.com/72';
+            if (elementos.statsAssistenteFoto) elementos.statsAssistenteFoto.alt = assistente ? assistente.nome : 'Nenhum assistente';
+
+            if (elementos.statsUltimaPartida) elementos.statsUltimaPartida.textContent = ultima ? `${escapeHtml(ultima.equipeA || 'Equipe A')} ${Number(ultima.golsA || 0)} × ${Number(ultima.golsB || 0)} ${escapeHtml(ultima.equipeB || 'Equipe B')}` : 'Nenhuma partida encerrada.';
+            if (elementos.statsUltimaPartidaHorario) elementos.statsUltimaPartidaHorario.textContent = ultima ? `${escapeHtml(ultima.horario || '')}` : '';
+
             if (elementos.heroBadge) elementos.heroBadge.textContent = modoAdministrador ? 'Modo Admin' : 'Modo Visualização';
         }
 
@@ -1727,6 +1778,9 @@
                 descricao: `Fim da partida: ${motivo}`
             });
 
+            const partida = criarResumoPartidaAtual(motivo);
+            registrarPartidaEncerrada(partida);
+
             aplicarSelecaoPorResultadoPartida();
             atualizarCronometroDisplay();
             alert(`Partida encerrada!\n${motivo}`);
@@ -1778,6 +1832,8 @@
                 });
                 
                 aplicarSelecaoPorResultadoPartida();
+                const partida = criarResumoPartidaAtual('Partida finalizada');
+                registrarPartidaEncerrada(partida);
                 salvar();
                 
                 // Limpar dados da partida
@@ -1961,6 +2017,7 @@
                 console.error('Erro ao salvar no Firestore:', e);
             }
             renderizarDashboardEstatisticas();
+            atualizarResumoDashboard();
             atualizarInterfacePorPermissao();
         }
         async function resetarTudo() { 
@@ -1995,6 +2052,8 @@
             historicoCompeticions = [];
             competicaoAtiva = null;
             estatisticasDia = {};
+            partidasDia = [];
+            ultimaPartida = null;
             dataAtual = new Date().toISOString().split('T')[0];
             cronometroRodando = false;
             cronometroPausado = false;
@@ -2368,6 +2427,34 @@
         }
 
 
+        function criarResumoPartidaAtual(motivo) {
+            const equipesAtuais = [...new Set(selecionados.map(nome => jogadoresStats[nome]?.equipe || 'Sem equipe'))].filter(e => e && e !== 'Sem equipe');
+            const equipeA = equipesAtuais[0] || 'Equipe A';
+            const equipeB = equipesAtuais[1] || 'Equipe B';
+            const golsA = golsRegistrados.filter(gol => gol.equipe === equipeA).length;
+            const golsB = golsRegistrados.filter(gol => gol.equipe === equipeB).length;
+            const horario = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            return {
+                data: dataAtual,
+                horario,
+                equipeA,
+                equipeB,
+                golsA,
+                golsB,
+                motivo,
+                jogadores: [...selecionados],
+                golsRegistrados: JSON.parse(JSON.stringify(golsRegistrados || []))
+            };
+        }
+
+        function registrarPartidaEncerrada(partida) {
+            if (!partida || !partida.data) return;
+            partidasDia = Array.isArray(partidasDia) ? [...partidasDia, partida] : [partida];
+            ultimaPartida = partida;
+            salvar();
+        }
+
         function abrirHistorico() {
             renderizarHistorico();
             mostrarTela('historico');
@@ -2492,10 +2579,10 @@
         }
 
         // Listeners para atualizações em tempo real vindas do Firestore (via módulo)
-        window.addEventListener('firestorePlayersUpdated', (e) => { jogadoresStats = e.detail || {}; renderizarGrid(); renderizarDashboardEstatisticas(); });
+        window.addEventListener('firestorePlayersUpdated', (e) => { jogadoresStats = e.detail || {}; renderizarGrid(); renderizarDashboardEstatisticas(); atualizarResumoDashboard(); });
         window.addEventListener('firestoreRelatoriosUpdated', (e) => { relatoriosDiarios = e.detail || {}; });
         window.addEventListener('firestoreHistoricoUpdated', (e) => { historicoCompeticions = e.detail || []; });
-        window.addEventListener('firestoreInitialDataLoaded', () => { renderizarGrid(); renderizarDashboardEstatisticas(); });
+        window.addEventListener('firestoreInitialDataLoaded', () => { renderizarGrid(); renderizarDashboardEstatisticas(); atualizarResumoDashboard(); });
 
         if (window.fs && window.fs.loadInitialData) {
             window.fs.loadInitialData().catch(()=>{});
