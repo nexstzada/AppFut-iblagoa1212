@@ -23,15 +23,6 @@
         .stats-resumo { display: flex; gap: 20px; margin: 15px 0; flex-wrap: wrap; }
         .stat-box { background: #f5f5f5; padding: 10px; border-radius: 5px; flex: 1; min-width: 150px; }
         .btn-orange { background: #ff9800; }
-        .calendario-widget { position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 15px; width: 280px; font-size: 14px; z-index: 1000; }
-        .calendario-header { background: #2196F3; color: white; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .calendario-header button { padding: 5px 10px; font-size: 12px; cursor: pointer; border: none; border-radius: 4px; background: rgba(255,255,255,0.3); color: white; margin: 0; }
-        .calendario-header button:hover { background: rgba(255,255,255,0.5); }
-        .sabados-list { display: flex; flex-direction: column; gap: 8px; }
-        .sabado-item { background: #f0f7ff; padding: 10px; border-radius: 6px; border-left: 4px solid #4CAF50; display: flex; justify-content: space-between; align-items: center; }
-        .sabado-data { font-weight: bold; color: #2196F3; }
-        .sabado-hora { color: #4CAF50; font-weight: bold; }
-        .sabado-vazio { color: #999; text-align: center; padding: 15px; font-style: italic; }
         .gerenciamento-equipes { display: flex; gap: 20px; margin-top: 20px; }
         .secao-gerenciamento { flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .secao-gerenciamento h3 { color: #2196F3; margin-top: 0; border-bottom: 2px solid #2196F3; padding-bottom: 10px; }
@@ -80,18 +71,6 @@
         .opcao-equipe-item { background: #f5f7fa; padding: 8px 10px; border-radius: 8px; }
         .acoes-card { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
         .foto-gerenciar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; margin-right: 10px; }
-        .calendario-agenda { background: #f8fbff; border: 1px solid #dbeafe; border-radius: 12px; padding: 12px; margin-top: 12px; }
-        .calendario-agenda-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .calendario-agenda-header button { margin: 0; background: #2196F3; padding: 6px 10px; }
-        .calendario-agenda-semanas { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; color: #4b5563; font-size: 12px; font-weight: bold; text-align: center; }
-        .calendario-agenda-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .calendario-dia { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 0; min-height: 44px; color: #111827; font-weight: 600; }
-        .calendario-dia.fora-mes { opacity: 0.45; }
-        .calendario-dia.agendado { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
-        .calendario-dia.selecionado { outline: 2px solid #2196F3; box-shadow: inset 0 0 0 1px #2196F3; }
-        .calendario-dia.hoje { border-color: #ff9800; }
-        .editor-agendamento { margin-top: 12px; background: white; border: 1px solid #dbeafe; border-radius: 10px; padding: 12px; }
-        .editor-agendamento input { width: 120px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -149,31 +128,6 @@
 
     <div id="telaMenu" class="tela ativa">
         <h2>Cadastro e Seleção 📝</h2>
-        <div id="painelConfiguracaoPelada" class="admin-only" style="display:none; margin: 15px 0; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h3 style="margin-top: 0; color: #2196F3;">Configuração da Pelada</h3>
-            <p style="font-size: 13px; color: #666; margin-top: 0;">Selecione datas específicas no calendário abaixo e defina o horário da pelada para cada uma.</p>
-            <div class="calendario-agenda">
-                <div class="calendario-agenda-header">
-                    <button class="btn-blue btn-xs" onclick="mudarMesAgendamento(-1)" data-admin-control>◀</button>
-                    <div id="mesAgendamentoLabel" style="font-weight: bold; color: #1f2937;"></div>
-                    <button class="btn-blue btn-xs" onclick="mudarMesAgendamento(1)" data-admin-control>▶</button>
-                </div>
-                <div class="calendario-agenda-semanas">
-                    <div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sab</div><div>Dom</div>
-                </div>
-                <div id="gridCalendarioAgendamento" class="calendario-agenda-grid"></div>
-            </div>
-            <div id="editorAgendamento" class="editor-agendamento" style="display:none;">
-                <div id="dataSelecionadaLabel" style="font-weight: bold; margin-bottom: 8px;"></div>
-                <label for="horarioAgendamento">Horário:</label>
-                <input type="time" id="horarioAgendamento" value="19:30" data-admin-control>
-                <div style="margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap;">
-                    <button class="btn-blue" onclick="salvarAgendamentoSelecionado()" data-admin-control>Salvar</button>
-                    <button class="btn-red" onclick="removerAgendamentoSelecionado()" data-admin-control>Remover</button>
-                    <button class="btn-orange" onclick="cancelarAgendamentoSelecionado()" data-admin-control>Cancelar</button>
-                </div>
-            </div>
-        </div>
         <div id="selecaoCadastro" class="admin-only" style="display:none;">
             <button class="btn-green" onclick="abrirModalCadastroJogador()">➕ Adicionar Jogador</button>
         </div>
@@ -214,10 +168,6 @@
                 <p style="color: #666; font-size: 12px; margin-top: 15px;">
                     💡 Modo Primeira Partida: muda a vitória para 3 gols automaticamente
                 </p>
-            </div>
-            <div class="configuracao-jogo" style="margin-top:10px;">
-                <h3>📅 Configurar Datas da Pelada</h3>
-                <p style="font-size:13px;color:#666;">Os agendamentos agora são feitos diretamente no calendário da tela inicial, por data específica.</p>
             </div>
             <button class="btn-blue" onclick="iniciarPartida()" style="font-size: 16px; padding: 15px 30px;" data-admin-control>Começar Partida ⚽</button>
             <button class="btn-red" onclick="voltarMenu()" style="font-size: 14px;">Cancelar 🔙</button>
@@ -352,15 +302,6 @@
 
     <button id="btnResetarTudo" class="btn-red btn-reset-tudo admin-only" onclick="resetarTudo()" style="display:none;">Resetar Tudo</button>
 
-    <div id="calendarioWidget" class="calendario-widget">
-        <div class="calendario-header">
-            <button onclick="mesesAnterior()">◀</button>
-            <span id="mesAtual"></span>
-            <button onclick="proximoMes()">▶</button>
-        </div>
-        <div id="sabadosList" class="sabados-list"></div>
-    </div>
-
     <script>
         const db = firebase.firestore();
 
@@ -377,8 +318,8 @@
                 jogadoresStats: normalizarMapaEstatisticas(jogadoresStats),
                 relatoriosDiarios,
                 historicoCompeticions,
-                configCalendario: normalizarConfigCalendario(configCalendario),
                 competicaoAtiva,
+                selecionados: Array.isArray(selecionados) ? [...selecionados] : [],
                 estatisticasDia: JSON.parse(JSON.stringify(estatisticasDia || {})),
                 dataAtual
             };
@@ -392,8 +333,8 @@
             jogadoresStats = normalizarMapaEstatisticas(dadosStats.jogadoresStats || {});
             relatoriosDiarios = dadosStats.relatoriosDiarios || {};
             historicoCompeticions = dadosStats.historicoCompeticions || [];
-            configCalendario = normalizarConfigCalendario(dadosStats.configCalendario || { datas: {}, mesmoHorario: true });
             competicaoAtiva = dadosStats.competicaoAtiva || null;
+            selecionados = Array.isArray(dadosStats.selecionados) ? [...dadosStats.selecionados] : [];
             estatisticasDia = JSON.parse(JSON.stringify(dadosStats.estatisticasDia || {}));
             dataAtual = dadosStats.dataAtual || dataAtual;
 
@@ -415,7 +356,6 @@
                 jogadoresStats: {},
                 relatoriosDiarios: {},
                 historicoCompeticions: [],
-                configCalendario: { datas: {}, mesmoHorario: true },
                 competicaoAtiva: null
             });
             await db.collection("competicao").doc("relatorios").set({ relatoriosDiarios: {} });
@@ -435,10 +375,6 @@
             },
             async saveHistorico(id, data) {
                 historicoCompeticions = Array.isArray(historicoCompeticions) ? [...historicoCompeticions, data] : [data];
-                await salvarEstadoFirestore();
-            },
-            async saveConfigCalendario(cfg) {
-                configCalendario = normalizarConfigCalendario(cfg);
                 await salvarEstadoFirestore();
             },
             async saveCompeticaoAtiva(value) {
@@ -462,9 +398,9 @@
                 jogadoresStats = {};
                 relatoriosDiarios = {};
                 historicoCompeticions = [];
-                configCalendario = { datas: {}, mesmoHorario: true };
                 competicaoAtiva = null;
                 selecionados = [];
+                selecionadosPartidaAtual = [];
                 estatisticasDia = {};
                 dataAtual = new Date().toISOString().split('T')[0];
                 cronometroRodando = false;
@@ -487,16 +423,17 @@
 
         db.collection("competicao").doc("stats").onSnapshot((snapshot) => {
             const dados = snapshot.exists ? (snapshot.data() || {}) : {};
-            jogadoresStats = dados.jogadoresStats || {};
+            jogadoresStats = normalizarMapaEstatisticas(dados.jogadoresStats || {});
             relatoriosDiarios = dados.relatoriosDiarios || {};
             historicoCompeticions = dados.historicoCompeticions || [];
-            configCalendario = normalizarConfigCalendario(dados.configCalendario || { datas: {}, mesmoHorario: true });
             competicaoAtiva = dados.competicaoAtiva || null;
+            selecionados = Array.isArray(dados.selecionados) ? [...dados.selecionados] : [];
+            estatisticasDia = JSON.parse(JSON.stringify(dados.estatisticasDia || {}));
+            dataAtual = dados.dataAtual || dataAtual;
 
             window.dispatchEvent(new CustomEvent('firestorePlayersUpdated', { detail: jogadoresStats }));
             window.dispatchEvent(new CustomEvent('firestoreRelatoriosUpdated', { detail: relatoriosDiarios }));
             window.dispatchEvent(new CustomEvent('firestoreHistoricoUpdated', { detail: historicoCompeticions }));
-            window.dispatchEvent(new CustomEvent('firestoreConfigUpdated', { detail: configCalendario }));
             window.dispatchEvent(new CustomEvent('firestoreEstadoUpdated', { detail: competicaoAtiva }));
         });
     </script>
@@ -511,9 +448,9 @@
         let relatoriosDiarios = {};
         let historicoCompeticions = [];
         let selecionados = [];
+        let selecionadosPartidaAtual = [];
         let dataAtual = new Date().toISOString().split('T')[0];
         let estatisticasDia = {};
-        let mesesExibindo = new Date();
         let competicaoAtiva = null;
         
         // Variáveis do cronômetro e partida
@@ -869,213 +806,6 @@
             );
         }
 
-        function obterSabadosDoMes(data) {
-            const ano = data.getFullYear();
-            const mes = data.getMonth();
-            const sabados = [];
-            
-            // Encontrar o primeiro dia do mês
-            const primeiroDia = new Date(ano, mes, 1);
-            
-            // Encontrar o primeiro sábado do mês (sábado = 6)
-            let primeiraSabado = new Date(primeiroDia);
-            const diaSemanaInicial = primeiroDia.getDay();
-            const diasParaSabado = (6 - diaSemanaInicial + 7) % 7;
-            primeiraSabado.setDate(1 + (diasParaSabado === 0 ? 0 : diasParaSabado));
-            
-            // Se o resultado for no mês anterior, comece no primeiro sábado do mês atual
-            if (primeiraSabado.getMonth() !== mes) {
-                primeiraSabado.setDate(primeiraSabado.getDate() + 7);
-            }
-            
-            // Coletar todos os sábados do mês
-            while (primeiraSabado.getMonth() === mes) {
-                sabados.push(new Date(primeiraSabado));
-                primeiraSabado.setDate(primeiraSabado.getDate() + 7);
-            }
-            
-            return sabados;
-        }
-
-        // Configuração do calendário (sincronizada com Firestore via listeners)
-        let configCalendario = { datas: {}, mesmoHorario: true };
-        let mesAgendamento = new Date();
-        let dataAgendamentoSelecionada = null;
-
-        function formatarChaveData(data) {
-            const ano = data.getFullYear();
-            const mes = String(data.getMonth() + 1).padStart(2, '0');
-            const dia = String(data.getDate()).padStart(2, '0');
-            return `${ano}-${mes}-${dia}`;
-        }
-
-        function formatarDataBrasil(data) {
-            return data.toLocaleDateString('pt-BR');
-        }
-
-        function normalizarConfigCalendario(cfg) {
-            const copia = cfg || {};
-            if (!copia.datas) {
-                copia.datas = {};
-            }
-            if (copia.dias && Object.keys(copia.datas).length === 0) {
-                copia.datas = {};
-            }
-            return copia;
-        }
-
-        function carregarConfiguracaoCalendario() {
-            configCalendario = normalizarConfigCalendario(configCalendario);
-            if (document.getElementById('mesAgendamentoLabel')) {
-                document.getElementById('mesAgendamentoLabel').textContent = mesAgendamento.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).replace(/(^\w)/, c => c.toUpperCase());
-            }
-            renderCalendarioAgendamento();
-            window.dispatchEvent(new CustomEvent('officialGameDaysUpdated', { detail: configCalendario }));
-            renderizarCalendario();
-        }
-
-        function renderCalendarioAgendamento() {
-            const grid = document.getElementById('gridCalendarioAgendamento');
-            const label = document.getElementById('mesAgendamentoLabel');
-            if (!grid || !label) return;
-
-            const ano = mesAgendamento.getFullYear();
-            const mes = mesAgendamento.getMonth();
-            label.textContent = mesAgendamento.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).replace(/(^\w)/, c => c.toUpperCase());
-            grid.innerHTML = '';
-
-            const primeiroDia = new Date(ano, mes, 1);
-            const ultimoDia = new Date(ano, mes + 1, 0);
-            const offset = (primeiroDia.getDay() + 6) % 7;
-            const diasDoMes = ultimoDia.getDate();
-            const hoje = new Date();
-            const hojeKey = formatarChaveData(hoje);
-
-            for (let i = 0; i < offset; i++) {
-                const vazio = document.createElement('div');
-                vazio.className = 'calendario-dia fora-mes';
-                vazio.textContent = '';
-                grid.appendChild(vazio);
-            }
-
-            for (let dia = 1; dia <= diasDoMes; dia++) {
-                const data = new Date(ano, mes, dia);
-                const key = formatarChaveData(data);
-                const botao = document.createElement('button');
-                botao.className = 'calendario-dia';
-                if (key === hojeKey) botao.classList.add('hoje');
-                if (dataAgendamentoSelecionada === key) botao.classList.add('selecionado');
-                if (configCalendario.datas && configCalendario.datas[key]) botao.classList.add('agendado');
-                botao.textContent = dia;
-                botao.onclick = () => selecionarDiaAgendamento(key);
-                grid.appendChild(botao);
-            }
-        }
-
-        function mudarMesAgendamento(delta) {
-            mesAgendamento = new Date(mesAgendamento.getFullYear(), mesAgendamento.getMonth() + delta, 1);
-            renderCalendarioAgendamento();
-        }
-
-        function selecionarDiaAgendamento(chave) {
-            if (!modoAdministrador) {
-                alert('Acesso negado. Esta ação é restrita ao Painel do Administrador.');
-                return;
-            }
-            dataAgendamentoSelecionada = chave;
-            const editor = document.getElementById('editorAgendamento');
-            const label = document.getElementById('dataSelecionadaLabel');
-            const input = document.getElementById('horarioAgendamento');
-            const dataObj = new Date(chave + 'T00:00:00');
-            label.textContent = `Data selecionada: ${formatarDataBrasil(dataObj)}`;
-            input.value = configCalendario.datas && configCalendario.datas[chave] ? configCalendario.datas[chave] : '19:30';
-            editor.style.display = 'block';
-            renderCalendarioAgendamento();
-        }
-
-        function salvarAgendamentoSelecionado() {
-            if (!verificarPermissao('agendamento de datas')) return;
-            if (!dataAgendamentoSelecionada) {
-                alert('Selecione uma data primeiro.');
-                return;
-            }
-            const input = document.getElementById('horarioAgendamento');
-            const horario = input.value;
-            if (!horario || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(horario)) {
-                alert('Informe o horário no formato HH:MM (24 horas).');
-                return;
-            }
-            configCalendario.datas[dataAgendamentoSelecionada] = horario;
-            if (window.fs && window.fs.saveConfigCalendario) {
-                window.fs.saveConfigCalendario(configCalendario).catch(()=>{});
-            }
-            carregarConfiguracaoCalendario();
-            alert('Data agendada com sucesso.');
-        }
-
-        function removerAgendamentoSelecionado() {
-            if (!verificarPermissao('remoção de datas')) return;
-            if (!dataAgendamentoSelecionada) return;
-            delete configCalendario.datas[dataAgendamentoSelecionada];
-            if (window.fs && window.fs.saveConfigCalendario) {
-                window.fs.saveConfigCalendario(configCalendario).catch(()=>{});
-            }
-            carregarConfiguracaoCalendario();
-            alert('Agendamento removido.');
-        }
-
-        function cancelarAgendamentoSelecionado() {
-            dataAgendamentoSelecionada = null;
-            document.getElementById('editorAgendamento').style.display = 'none';
-            renderCalendarioAgendamento();
-        }
-
-        function salvarCalendarioConfig() {
-            salvarAgendamentoSelecionado();
-        }
-
-        function renderizarCalendario() {
-            const mes = mesesExibindo.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-            document.getElementById('mesAtual').textContent = mes.charAt(0).toUpperCase() + mes.slice(1);
-
-            const sabadosList = document.getElementById('sabadosList');
-            sabadosList.innerHTML = '';
-
-            const ano = mesesExibindo.getFullYear();
-            const mesIdx = mesesExibindo.getMonth();
-            const ultimoDia = new Date(ano, mesIdx + 1, 0).getDate();
-
-            for (let d = 1; d <= ultimoDia; d++) {
-                const dt = new Date(ano, mesIdx, d);
-                const chave = formatarChaveData(dt);
-                const horario = configCalendario.datas && configCalendario.datas[chave] ? configCalendario.datas[chave] : null;
-                if (!horario) continue;
-
-                const item = document.createElement('div');
-                item.className = 'sabado-item';
-                item.innerHTML = `
-                    <div>
-                        <div class="sabado-data">${String(d).padStart(2, '0')} - ${dt.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase()}</div>
-                    </div>
-                    <div class="sabado-hora">⏰ ${horario}</div>
-                `;
-                sabadosList.appendChild(item);
-            }
-            if (!sabadosList.hasChildNodes()) {
-                sabadosList.innerHTML = '<div class="sabado-vazio">Nenhum dia de jogo configurado neste mês</div>';
-            }
-        }
-
-        function proximoMes() {
-            mesesExibindo.setMonth(mesesExibindo.getMonth() + 1);
-            renderizarCalendario();
-        }
-
-        function mesesAnterior() {
-            mesesExibindo.setMonth(mesesExibindo.getMonth() - 1);
-            renderizarCalendario();
-        }
-
         function renderizarGrid() {
             const grid = document.getElementById('gridJogadores');
             if (!grid) return;
@@ -1117,6 +847,56 @@
                 selecionados.push(nome);
                 btn.innerText = "-"; btn.className = "btn-red";
             }
+            salvar();
+        }
+
+        function aplicarSelecaoPorResultadoPartida() {
+            const equipesParticipantes = [...new Set(
+                selecionados
+                    .map(nome => jogadoresStats[nome]?.equipe || '')
+                    .filter(Boolean)
+            )];
+
+            if (equipesParticipantes.length === 0) {
+                selecionados = [];
+                renderizarGrid();
+                salvar();
+                return;
+            }
+
+            const golsPorEquipe = {};
+            equipesParticipantes.forEach(equipe => {
+                golsPorEquipe[equipe] = 0;
+            });
+
+            golsRegistrados.forEach(gol => {
+                if (golsPorEquipe[gol.equipe] !== undefined) {
+                    golsPorEquipe[gol.equipe] += 1;
+                }
+            });
+
+            if (equipesParticipantes.length === 1) {
+                const equipeUnica = equipesParticipantes[0];
+                selecionados = golsPorEquipe[equipeUnica] > 0
+                    ? selecionados.filter(nome => (jogadoresStats[nome]?.equipe || '') === equipeUnica)
+                    : [];
+                renderizarGrid();
+                salvar();
+                return;
+            }
+
+            const maiorGols = Math.max(...equipesParticipantes.map(equipe => golsPorEquipe[equipe]));
+            const vencedoras = equipesParticipantes.filter(equipe => golsPorEquipe[equipe] === maiorGols);
+
+            if (vencedoras.length !== 1 || maiorGols === 0) {
+                selecionados = [];
+            } else {
+                const equipeVencedora = vencedoras[0];
+                selecionados = selecionados.filter(nome => (jogadoresStats[nome]?.equipe || '') === equipeVencedora);
+            }
+
+            renderizarGrid();
+            salvar();
         }
 
         function iniciarJogo() {
@@ -1155,6 +935,7 @@
             }
             
             // Inicializar cronômetro
+            selecionadosPartidaAtual = [...selecionados];
             tempoRestante = configPartida.duracao * 60;
             tempoAcrescimos = 0;
             golsRegistrados = [];
@@ -1395,7 +1176,8 @@
                 tempo: formatarTempo(tempoRestante),
                 descricao: `Fim da partida: ${motivo}`
             });
-            
+
+            aplicarSelecaoPorResultadoPartida();
             atualizarCronometroDisplay();
             alert(`Partida encerrada!\n${motivo}`);
         }
@@ -1426,8 +1208,12 @@
             if (!verificarPermissao('finalização de partida')) return;
 
             if(solicitarPin()) {
+                const nomesSelecionadosPartida = Array.isArray(selecionadosPartidaAtual) && selecionadosPartidaAtual.length > 0
+                    ? selecionadosPartidaAtual
+                    : [...selecionados];
+
                 Object.keys(jogadoresStats).forEach(nome => {
-                    if (selecionados.includes(nome)) {
+                    if (nomesSelecionadosPartida.includes(nome)) {
                         jogadoresStats[nome].partidas++;
                         jogadoresStats[nome].fora = 0;
                         garantirEstatisticasDiaJogador(nome).partidas = Number(garantirEstatisticasDiaJogador(nome).partidas || 0) + 1;
@@ -1437,8 +1223,8 @@
                     }
                 });
                 
+                aplicarSelecaoPorResultadoPartida();
                 salvar();
-                selecionados = [];
                 
                 // Limpar dados da partida
                 golsRegistrados = [];
@@ -1681,10 +1467,10 @@
             }
 
             selecionados = [];
+            selecionadosPartidaAtual = [];
             jogadoresStats = {};
             relatoriosDiarios = {};
             historicoCompeticions = [];
-            configCalendario = { datas: {}, mesmoHorario: true };
             competicaoAtiva = null;
             estatisticasDia = {};
             dataAtual = new Date().toISOString().split('T')[0];
@@ -2189,8 +1975,7 @@
         window.addEventListener('firestorePlayersUpdated', (e) => { jogadoresStats = e.detail || {}; renderizarGrid(); });
         window.addEventListener('firestoreRelatoriosUpdated', (e) => { relatoriosDiarios = e.detail || {}; });
         window.addEventListener('firestoreHistoricoUpdated', (e) => { historicoCompeticions = e.detail || []; });
-        window.addEventListener('firestoreConfigUpdated', (e) => { configCalendario = normalizarConfigCalendario(e.detail || { datas: {}, mesmoHorario: true }); carregarConfiguracaoCalendario(); renderizarCalendario(); });
-        window.addEventListener('firestoreInitialDataLoaded', () => { renderizarGrid(); renderizarCalendario(); });
+        window.addEventListener('firestoreInitialDataLoaded', () => { renderizarGrid(); });
 
         if (window.fs && window.fs.loadInitialData) {
             window.fs.loadInitialData().catch(()=>{});
@@ -2198,8 +1983,6 @@
 
         atualizarModoAcesso();
         renderizarGrid();
-        renderizarCalendario();
     </script>
 </body>
 </html>
-
