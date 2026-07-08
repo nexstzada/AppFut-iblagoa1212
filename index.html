@@ -194,8 +194,25 @@
         .card img { width: 92px; height: 92px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 12px; border: 3px solid rgba(59,130,246,0.08); }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .section-header h3 { margin: 0; }
-        .grid-jogadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .grid-jogadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
         .grid-jogadores .card { min-height: 250px; }
+        .equipe-card { border-radius: 24px; padding: 18px; min-height: 260px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+        .equipe-card-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .equipe-nome { font-size: 18px; font-weight: 800; }
+        .equipe-jogadores { display: flex; flex-direction: column; gap: 10px; }
+        .equipe-jogador { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 16px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .equipe-jogador span { font-weight: 600; }
+        .equipe-card-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .equipe-card-footer .btn { flex: 1; }
+        .btn-desativado { background: #999 !important; cursor: not-allowed !important; opacity: 0.7; }
+        .modal-sel-conteudo { max-width: 700px; width: 100%; }
+        .modal-sel-search { width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 14px; margin-bottom: 18px; }
+        .card-jogador-disponivel { border-radius: 18px; padding: 14px; background: var(--surface-alt); border: 1px solid var(--border); }
+        .card-jogador-disponivel:hover { transform: translateY(-1px); }
+        .modal-sel-badge { font-size: 13px; padding: 4px 8px; border-radius: 999px; background: rgba(59,130,246,0.12); color: var(--accent); }
+        .modal-sel-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .modal-sel-status { color: #666; font-size: 13px; }
+        .btn-xs { padding: 7px 10px; font-size: 12px; }
         .btn, button { padding: 10px 14px; cursor: pointer; border: none; border-radius: 999px; color: white; margin: 4px; transition: transform 0.2s ease, opacity 0.2s ease; }
         .btn:hover, button:hover { transform: translateY(-1px); }
         .btn-green { background: var(--accent-2); } .btn-red { background: var(--accent-4); } .btn-blue { background: var(--accent); } .btn-orange { background: var(--accent-3); color: #111827; }
@@ -455,6 +472,20 @@
             <div style="display:flex; gap:8px; margin-top:15px; flex-wrap:wrap;">
                 <button class="btn-blue" onclick="salvarEdicaoJogador()">Salvar</button>
                 <button class="btn-red" onclick="fecharModalEdicaoJogador()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalSelecionarJogador" class="modal-edicao">
+        <div class="modal-conteudo modal-sel-conteudo">
+            <div class="modal-header">
+                <h3 id="modalTituloSelecionar">Selecionar jogador para a equipe <span id="modalEquipeTitulo"></span></h3>
+                <button class="btn-red btn-xs" onclick="fecharModalSelecionarJogador()">✕</button>
+            </div>
+            <input id="searchJogadorEquipe" type="text" class="modal-sel-search" placeholder="🔍 Pesquisar jogador..." oninput="filtrarJogadoresEquipe()">
+            <div id="listaJogadoresDisponiveis"></div>
+            <div class="modal-sel-footer">
+                <span class="modal-sel-status">Selecione jogadores já cadastrados para montar a equipe.</span>
             </div>
         </div>
     </div>
@@ -1105,6 +1136,8 @@
             return Array.from({ length: 11 }, (_, i) => `Equipe ${i + 1}`);
         }
 
+        let equipeModalAtual = null;
+
         function obterJogadoresPorEquipe() {
             const equipes = { 'Sem equipe': [] };
             obterNomesEquipes().forEach(nomeEquipe => {
@@ -1119,6 +1152,101 @@
                 }
             });
             return equipes;
+        }
+
+        function abrirModalSelecionarJogador(equipe) {
+            if (!verificarPermissao('gerenciamento de equipes')) return;
+            equipeModalAtual = equipe;
+            document.getElementById('modalEquipeTitulo').textContent = equipe;
+            document.getElementById('searchJogadorEquipe').value = '';
+            document.getElementById('modalSelecionarJogador').style.display = 'flex';
+            renderizarListaJogadoresDisponiveis();
+        }
+
+        function fecharModalSelecionarJogador() {
+            equipeModalAtual = null;
+            document.getElementById('modalSelecionarJogador').style.display = 'none';
+        }
+
+        function filtrarJogadoresEquipe() {
+            renderizarListaJogadoresDisponiveis();
+        }
+
+        function renderizarListaJogadoresDisponiveis() {
+            const lista = document.getElementById('listaJogadoresDisponiveis');
+            const filtro = document.getElementById('searchJogadorEquipe')?.value.trim().toLowerCase() || '';
+            if (!lista) return;
+            lista.innerHTML = '';
+
+            const nomes = Object.keys(jogadoresStats).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            if (nomes.length === 0) {
+                lista.innerHTML = '<div class="empty-state">Nenhum jogador cadastrado no sistema.</div>';
+                return;
+            }
+
+            nomes.forEach(nome => {
+                const jogador = normalizarJogador(nome, jogadoresStats[nome]);
+                const equipeAtual = jogador.equipe || 'Sem equipe';
+                if (filtro && !nome.toLowerCase().includes(filtro) && !equipeAtual.toLowerCase().includes(filtro)) {
+                    return;
+                }
+
+                const estaEmOutraEquipe = equipeAtual && equipeAtual !== equipeModalAtual && equipeAtual !== 'Sem equipe';
+                const estaNaEquipeAtual = equipeAtual === equipeModalAtual;
+                const nomeEscapado = escaparParaAtributoJs(nome);
+                const equipeAtualEscapada = escapeHtml(equipeAtual);
+                const equipeCheia = contarJogadoresEquipe(equipeModalAtual) >= MAX_JOGADORES_POR_EQUIPE;
+                const botao = estaNaEquipeAtual
+                    ? `<button class="btn-xs btn-blue" style="background:#3b82f6; cursor: default;">Selecionado</button>`
+                    : equipeCheia
+                        ? `<button class="btn-xs btn-desativado" disabled>Equipe cheia</button>`
+                        : `<button class="btn-green btn-xs" onclick="selecionarJogadorParaEquipe('${nomeEscapado}')">${estaEmOutraEquipe ? `Mover de ${equipeAtualEscapada}` : 'Selecionar'}</button>`;
+
+                lista.innerHTML += `
+                    <div class="card card-jogador-disponivel">
+                        <div style="display:flex; align-items:center; gap:14px;">
+                            <img src="${jogador.foto || 'https://via.placeholder.com/60'}" alt="${escapeHtml(nome)}" style="width:60px; height:60px; border-radius:18px; object-fit:cover;" />
+                            <div style="flex:1;">
+                                <div style="font-weight:700; font-size:16px;">${escapeHtml(nome)}</div>
+                                <div style="margin-top:6px; font-size:13px; color:#555;">Equipe atual: ${escapeHtml(equipeAtual)}</div>
+                                <div style="display:flex; gap:10px; margin-top:10px; font-size:12px; color:#555;">
+                                    <span>⚽ ${jogador.gols || 0}</span>
+                                    <span>🅰 ${jogador.assis || 0}</span>
+                                    <span>🟨 ${jogador.amarelo || 0}</span>
+                                </div>
+                            </div>
+                            <div>${botao}</div>
+                        </div>
+                    </div>`;
+            });
+
+            if (!lista.innerHTML) {
+                lista.innerHTML = '<div class="empty-state">Nenhum jogador corresponde à pesquisa ou todos já estão alocados.</div>';
+            }
+        }
+
+        function selecionarJogadorParaEquipe(nome) {
+            if (!verificarPermissao('gerenciamento de equipes')) return;
+            if (!equipeModalAtual || !jogadoresStats[nome]) return;
+            if (contarJogadoresEquipe(equipeModalAtual) >= MAX_JOGADORES_POR_EQUIPE) {
+                alert(`${equipeModalAtual} já atingiu o limite de ${MAX_JOGADORES_POR_EQUIPE} jogadores.`);
+                return;
+            }
+
+            jogadoresStats[nome].equipe = equipeModalAtual;
+            salvar();
+            renderizarGerenciamento();
+            renderizarGrid();
+            fecharModalSelecionarJogador();
+        }
+
+        function removerJogadorDaEquipe(nome) {
+            if (!verificarPermissao('gerenciamento de equipes')) return;
+            if (!jogadoresStats[nome]) return;
+            jogadoresStats[nome].equipe = '';
+            salvar();
+            renderizarGerenciamento();
+            renderizarGrid();
         }
 
         function contarJogadoresEquipe(nomeEquipe) {
@@ -1272,11 +1400,13 @@
         }
 
         function iniciarJogo() {
-            if (selecionados.length === 0) {
-                alert("Selecione pelo menos um jogador!");
+            const equipes = obterJogadoresPorEquipe();
+            const jogadoresEmEquipes = Object.values(equipes).flat().filter(nome => nome && nome !== 'Sem equipe');
+            if (jogadoresEmEquipes.length === 0) {
+                alert("Nenhum jogador alocado em equipe. Adicione jogadores às equipes antes de iniciar a partida.");
                 return;
             }
-
+            selecionados = jogadoresEmEquipes;
             renderizarPlacarPartida();
             atualizarCronometroDisplay();
             mostrarTela('partidas');
@@ -1284,7 +1414,11 @@
 
         function iniciarPartida() {
             if (selecionados.length === 0) {
-                alert('Selecione pelo menos um jogador antes de iniciar a partida.');
+                const equipes = obterJogadoresPorEquipe();
+                selecionados = Object.values(equipes).flat().filter(nome => nome && nome !== 'Sem equipe');
+            }
+            if (selecionados.length === 0) {
+                alert('Nenhum jogador alocado em equipe. Adicione jogadores às equipes antes de iniciar a partida.');
                 return;
             }
 
@@ -1815,38 +1949,58 @@
             if (!container) return;
             container.innerHTML = '';
 
-            if (Object.keys(jogadoresStats).length === 0) {
-                container.innerHTML = '<div class="empty-state">Nenhum jogador cadastrado ainda. Abra o painel administrativo para iniciar o cadastro e montar equipes.</div>';
-                const listaReservas = document.getElementById('lista-reservas');
-                if (listaReservas) {
-                    listaReservas.innerHTML = '<p style="color: #999; text-align: center;">Sem jogadores reservas</p>';
-                }
-                return;
-            }
-            
             obterNomesEquipes().forEach(nomEquipe => {
-                const secao = document.createElement('div');
-                secao.className = 'secao-gerenciamento';
-                secao.style.minWidth = '240px';
-                secao.style.flex = '1 1 240px';
+                const jogadoresEquipe = equipes[nomEquipe] || [];
+                const estaCheia = jogadoresEquipe.length >= MAX_JOGADORES_POR_EQUIPE;
+                const equipeCard = document.createElement('div');
+                equipeCard.className = 'equipe-card';
 
-                const titulo = document.createElement('h3');
-                titulo.textContent = nomEquipe;
-                secao.appendChild(titulo);
-
-                const lista = document.createElement('div');
-                lista.className = 'lista-gerenciamento';
-                lista.innerHTML = '';
-                
-                if (equipes[nomEquipe].length === 0) {
-                    lista.innerHTML = '<p style="color: #999; text-align: center;">Sem jogadores</p>';
+                let jogadoresHtml = '';
+                if (jogadoresEquipe.length === 0) {
+                    jogadoresHtml = '<div class="empty-state" style="margin:0; padding:14px;">Sem jogadores nesta equipe.</div>';
                 } else {
-                    equipes[nomEquipe].forEach(nome => {
+                    jogadoresEquipe.forEach(nome => {
                         const jogador = normalizarJogador(nome, jogadoresStats[nome]);
-                        const div = document.createElement('div');
-                        div.className = 'jogador-gerenciar';
                         const nomeEscapado = escaparParaAtributoJs(nome);
-                        div.innerHTML = `
+                        jogadoresHtml += `
+                            <div class="equipe-jogador">
+                                <span>${escapeHtml(nome)}</span>
+                                ${modoAdministrador ? `<button class="btn-red btn-xs" onclick="removerJogadorDaEquipe('${nomeEscapado}')">❌</button>` : ''}
+                            </div>`;
+                    });
+                }
+
+                equipeCard.innerHTML = `
+                    <div class="equipe-card-header">
+                        <div class="equipe-nome">${escapeHtml(nomEquipe)}</div>
+                        <div class="modal-sel-status">${jogadoresEquipe.length} / ${MAX_JOGADORES_POR_EQUIPE}</div>
+                    </div>
+                    <div class="equipe-jogadores">${jogadoresHtml}</div>
+                    <div class="equipe-card-footer">
+                        ${modoAdministrador
+                            ? `<button class="btn ${estaCheia ? 'btn-desativado' : 'btn-green'} btn-xs" ${estaCheia ? 'disabled' : `onclick="abrirModalSelecionarJogador('${escaparParaAtributoJs(nomEquipe)}')"`}>➕ ${estaCheia ? 'Cheia' : 'Adicionar'}</button>`
+                            : '<div style="color:#999;font-size:12px;">Modo somente leitura</div>'}
+                        ${estaCheia ? '<span class="modal-sel-status">Equipe completa</span>' : ''}
+                    </div>`;
+
+                container.appendChild(equipeCard);
+            });
+
+            const listaReservas = document.getElementById('lista-reservas');
+            if (!listaReservas) return;
+            listaReservas.innerHTML = '';
+
+            const todosJogadores = Object.keys(jogadoresStats);
+            const jogadoresEmEquipe = Object.values(equipes).flat();
+            const reservas = todosJogadores.filter(j => !jogadoresEmEquipe.includes(j));
+
+            if (reservas.length === 0) {
+                listaReservas.innerHTML = '<p style="color: #999; text-align: center;">Sem jogadores reservas</p>';
+            } else {
+                reservas.forEach(nome => {
+                    const jogador = normalizarJogador(nome, jogadoresStats[nome]);
+                    listaReservas.innerHTML += `
+                        <div class="jogador-gerenciar">
                             <div class="jogador-info" style="display:flex; align-items:center;">
                                 <img class="foto-gerenciar" src="${jogador.foto || 'https://via.placeholder.com/44'}" alt="${escapeHtml(nome)}">
                                 <div>
@@ -1855,49 +2009,9 @@
                                 </div>
                             </div>
                             <div class="botoes-acao">
-                                ${modoAdministrador ? `<button class="btn-red btn-xs" onclick="removerDeEquipe('${nomeEscapado}')">Remover</button>
-                                <button class="btn-blue btn-xs" onclick="selecionarTroca('${nomeEscapado}')">Trocar</button>
-                                <button class="btn-orange btn-xs" onclick="abrirModalEdicaoJogador('${nomeEscapado}')">Editar</button>` : '<span style="color:#999;font-size:12px;">Somente leitura</span>'}
+                                <span style="color:#999;font-size:12px;">Disponível para adicionar</span>
                             </div>
-                        `;
-                        lista.appendChild(div);
-                    });
-                }
-
-                secao.appendChild(lista);
-                container.appendChild(secao);
-            });
-            
-            const listaReservas = document.getElementById('lista-reservas');
-            if (!listaReservas) return;
-            listaReservas.innerHTML = '';
-            
-            const todosJogadores = Object.keys(jogadoresStats);
-            const jogadoresEmEquipe = Object.values(equipes).flat();
-            const reservas = todosJogadores.filter(j => !jogadoresEmEquipe.includes(j));
-            
-            if (reservas.length === 0) {
-                listaReservas.innerHTML = '<p style="color: #999; text-align: center;">Sem jogadores reservas</p>';
-            } else {
-                reservas.forEach(nome => {
-                    const jogador = normalizarJogador(nome, jogadoresStats[nome]);
-                    const div = document.createElement('div');
-                    div.className = 'jogador-gerenciar';
-                    const nomeEscapado = escaparParaAtributoJs(nome);
-                    div.innerHTML = `
-                        <div class="jogador-info" style="display:flex; align-items:center;">
-                            <img class="foto-gerenciar" src="${jogador.foto || 'https://via.placeholder.com/44'}" alt="${escapeHtml(nome)}">
-                            <div>
-                                <div class="jogador-nome">${escapeHtml(nome)}</div>
-                                <div class="jogador-equipe">Gols: ${jogador.gols} | Assis: ${jogador.assis}</div>
-                            </div>
-                        </div>
-                        <div class="botoes-acao">
-                            ${modoAdministrador ? `<button class="btn-green btn-xs" onclick="adicionarAEquipe('${nomeEscapado}')">Adicionar</button>
-                            <button class="btn-orange btn-xs" onclick="abrirModalEdicaoJogador('${nomeEscapado}')">Editar</button>` : '<span style="color:#999;font-size:12px;">Somente leitura</span>'}
-                        </div>
-                    `;
-                    listaReservas.appendChild(div);
+                        </div>`;
                 });
             }
         }
@@ -2109,64 +2223,6 @@
             }
         }
 
-        function removerDeEquipe(nome) {
-            if (!verificarPermissao('gerenciamento de equipes')) return;
-
-            if (confirm(`Remover ${nome} de sua equipe? Ele se tornará um reserva.`)) {
-                jogadoresStats[nome].equipe = '';
-                salvar();
-                renderizarGerenciamento();
-                renderizarGrid();
-            }
-        }
-
-        function selecionarTroca(nome) {
-            if (!verificarPermissao('gerenciamento de equipes')) return;
-
-            const opcoes = obterNomesEquipes().map((equipe, index) => `${index + 1} = ${equipe}`).join('\n');
-            const resposta = prompt(`Qual equipe deseja adicionar este jogador?\n${opcoes}`);
-            const indice = parseInt(resposta, 10);
-            const equipeDestino = obterNomesEquipes()[indice - 1];
-            if (!equipeDestino) {
-                return;
-            }
-            
-            const equipesAtual = obterJogadoresPorEquipe();
-            
-            if (equipesAtual[equipeDestino].length >= MAX_JOGADORES_POR_EQUIPE && jogadoresStats[nome].equipe !== equipeDestino) {
-                alert(`${equipeDestino} já tem 3 jogadores!`);
-                return;
-            }
-            
-            jogadoresStats[nome].equipe = equipeDestino;
-            salvar();
-            renderizarGerenciamento();
-            renderizarGrid();
-        }
-
-        function adicionarAEquipe(nome) {
-            if (!verificarPermissao('gerenciamento de equipes')) return;
-
-            const opcoes = obterNomesEquipes().map((equipe, index) => `${index + 1} = ${equipe}`).join('\n');
-            const resposta = prompt(`Qual equipe deseja adicionar este jogador?\n${opcoes}`);
-            const indice = parseInt(resposta, 10);
-            const nomeEquipe = obterNomesEquipes()[indice - 1];
-            if (!nomeEquipe) {
-                return;
-            }
-            
-            const equipesAtual = obterJogadoresPorEquipe();
-            
-            if (equipesAtual[nomeEquipe].length >= MAX_JOGADORES_POR_EQUIPE) {
-                alert(`${nomeEquipe} já tem 3 jogadores!`);
-                return;
-            }
-            
-            jogadoresStats[nome].equipe = nomeEquipe;
-            salvar();
-            renderizarGerenciamento();
-            renderizarGrid();
-        }
 
         function abrirHistorico() {
             renderizarHistorico();
