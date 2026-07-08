@@ -589,24 +589,24 @@
                             <td><img src="${p.foto || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;"></td>
                             <td>${escapeHtml(nome)}</td>
                             <td>
-                                <button class="btn-red btn-xs" onclick="removerEstatisticaJogador('${nomeEscapado}', 'gols')">-</button>
+                                ${modoAdministrador ? `<button class="btn-red btn-xs" onclick="removerEstatisticaJogador('${nomeEscapado}', 'gols')">-</button>` : ''}
                                 <span id="${gerarIdJogador(nome, 'gols')}">${p.gols || 0}</span>
-                                <button class="btn-green btn-xs" onclick="adicionarGol('${nomeEscapado}', '${escapeHtml(equipe)}')">+</button>
+                                ${modoAdministrador ? `<button class="btn-green btn-xs" onclick="adicionarGol('${nomeEscapado}', '${escapeHtml(equipe)}')">+</button>` : ''}
                             </td>
                             <td>
-                                <button class="btn-red btn-xs" onclick="removerEstatisticaJogador('${nomeEscapado}', 'assis')">-</button>
+                                ${modoAdministrador ? `<button class="btn-red btn-xs" onclick="removerEstatisticaJogador('${nomeEscapado}', 'assis')">-</button>` : ''}
                                 <span id="${gerarIdJogador(nome, 'assis')}">${p.assis || 0}</span>
-                                <button class="btn-green btn-xs" onclick="somar('${nomeEscapado}', 'assis')">+</button>
+                                ${modoAdministrador ? `<button class="btn-green btn-xs" onclick="somar('${nomeEscapado}', 'assis')">+</button>` : ''}
                             </td>
                             <td>
-                                <button class="btn-red btn-xs" onclick="removerEstatisticaJogador('${nomeEscapado}', 'amarelo')">-</button>
+                                ${modoAdministrador ? `<button class="btn-red btn-xs" onclick="removerEstatisticaJogador('${nomeEscapado}', 'amarelo')">-</button>` : ''}
                                 <span id="${gerarIdJogador(nome, 'amarelo')}">${p.amarelo || 0}</span>
-                                <button class="btn-green btn-xs" onclick="somar('${nomeEscapado}', 'amarelo')">+</button>
+                                ${modoAdministrador ? `<button class="btn-green btn-xs" onclick="somar('${nomeEscapado}', 'amarelo')">+</button>` : ''}
                             </td>
                             <td>
-                                <button class="btn-red btn-xs" onclick="removerEstatisticaJogador('${nomeEscapado}', 'vermelho')">-</button>
+                                ${modoAdministrador ? `<button class="btn-red btn-xs" onclick="removerEstatisticaJogador('${nomeEscapado}', 'vermelho')">-</button>` : ''}
                                 <span id="${gerarIdJogador(nome, 'vermelho')}">${p.vermelho || 0}</span>
-                                <button class="btn-green btn-xs" onclick="somar('${nomeEscapado}', 'vermelho')">+</button>
+                                ${modoAdministrador ? `<button class="btn-green btn-xs" onclick="somar('${nomeEscapado}', 'vermelho')">+</button>` : ''}
                             </td>
                         </tr>`;
                     });
@@ -618,6 +618,10 @@
 
         function removerEstatisticaJogador(nome, tipo, origemRelatorio = false) {
             if (!verificarPermissao('remoção de eventos')) return;
+            if (!modoAdministrador) {
+                alert('Acesso negado. Esta ação é restrita ao Painel do Administrador.');
+                return;
+            }
             const jogador = jogadoresStats[nome] ? normalizarJogador(nome, jogadoresStats[nome]) : null;
             if (!jogador) return;
 
@@ -676,6 +680,29 @@
             salvar();
         }
 
+        function atualizarInterfacePorPermissao() {
+            const telaMenu = document.getElementById('telaMenu');
+            const telaPlacar = document.getElementById('telaPlacar');
+            const telaRelatorios = document.getElementById('telaRelatorios');
+            const telaGerenciamento = document.getElementById('telaGerenciamento');
+
+            if (telaMenu && telaMenu.classList.contains('ativa')) {
+                renderizarGrid();
+            }
+            if (telaGerenciamento && telaGerenciamento.classList.contains('ativa')) {
+                renderizarGerenciamento();
+            }
+            if (telaPlacar && telaPlacar.classList.contains('ativa')) {
+                renderizarPlacarPartida();
+            }
+            if (telaRelatorios && telaRelatorios.classList.contains('ativa')) {
+                const selectDia = document.getElementById('selectDia');
+                if (selectDia && selectDia.value) {
+                    exibirRelatorio();
+                }
+            }
+        }
+
         function atualizarModoAcesso() {
             const badge = document.getElementById('badgeModo');
             if (badge) {
@@ -699,6 +726,8 @@
                     el.style.opacity = modoAdministrador ? '' : '0.6';
                 }
             });
+
+            atualizarInterfacePorPermissao();
         }
 
         function verificarPermissao(acao = 'esta ação', mostrarMensagem = true) {
@@ -1086,6 +1115,10 @@
 
         function adicionarGol(nome, equipe) {
             if (!verificarPermissao('registro de gols')) return;
+            if (!modoAdministrador) {
+                alert('Acesso negado. Esta ação é restrita ao Painel do Administrador.');
+                return;
+            }
 
             if (partidaEncerrada) {
                 alert('A partida foi encerrada!');
@@ -1184,6 +1217,10 @@
 
         function somar(n, t) { 
             if (!verificarPermissao('registro de estatísticas')) return;
+            if (!modoAdministrador) {
+                alert('Acesso negado. Esta ação é restrita ao Painel do Administrador.');
+                return;
+            }
 
             if (partidaEncerrada) {
                 alert('A partida foi encerrada!');
@@ -1609,6 +1646,10 @@
 
         function salvarCadastroJogador() {
             if (!verificarPermissao('cadastro de jogadores')) return;
+            if (!modoAdministrador) {
+                alert('Acesso negado. Esta ação é restrita ao Painel do Administrador.');
+                return;
+            }
 
             const nome = document.getElementById('cadastroNome').value.trim();
             const equipe = document.getElementById('cadastroEquipe').value;
@@ -1708,6 +1749,10 @@
 
         function salvarEdicaoJogador() {
             if (!verificarPermissao('edição de jogadores')) return;
+            if (!modoAdministrador) {
+                alert('Acesso negado. Esta ação é restrita ao Painel do Administrador.');
+                return;
+            }
             if (!jogadorEmEdicao) return;
 
             const nomeAtual = jogadorEmEdicao;
