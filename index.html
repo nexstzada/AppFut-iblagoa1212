@@ -88,7 +88,11 @@
         [data-admin-control][disabled] { opacity: 0.6; pointer-events: none; }
         .btn-reset-tudo { position: fixed; left: 20px; bottom: 20px; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .modal-edicao { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 3000; padding: 20px; }
-        .modal-conteudo { background: white; width: min(520px, 100%); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-conteudo { background: white; width: min(520px, 100%); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        #listaJogadoresDisponiveis { max-height: 55vh; overflow-y: auto; }
+        .modal-sel-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; position: sticky; bottom: 0; background: white; padding-top: 10px; }
+        body.no-scroll { overflow: hidden; }
+        .hero-badge.hero-badge-clickable { cursor: pointer; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .preview-foto { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #2196F3; }
         .opcoes-equipe-edicao { display: grid; gap: 8px; margin-top: 10px; }
@@ -210,7 +214,7 @@
         .card-jogador-disponivel { border-radius: 18px; padding: 14px; background: var(--surface-alt); border: 1px solid var(--border); }
         .card-jogador-disponivel:hover { transform: translateY(-1px); }
         .modal-sel-badge { font-size: 13px; padding: 4px 8px; border-radius: 999px; background: rgba(59,130,246,0.12); color: var(--accent); }
-        .modal-sel-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .modal-sel-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; position: sticky; bottom: 0; background: white; padding-top: 10px; }
         .modal-sel-status { color: #666; font-size: 13px; }
         .btn-xs { padding: 7px 10px; font-size: 12px; }
         .btn, button { padding: 10px 14px; cursor: pointer; border: none; border-radius: 999px; color: white; margin: 4px; transition: transform 0.2s ease, opacity 0.2s ease; }
@@ -386,22 +390,22 @@
                 </div>
 
                 <div id="telaEstatisticas" class="tela page-shell">
-                    <div class="page-hero"><div><h2>Estatísticas</h2><p>Dashboard moderno com rankings por categoria.</p></div><div class="hero-badge">📊 Dashboard</div></div>
+                    <div class="page-hero"><div><h2>Estatísticas</h2><p>Dashboard moderno com rankings por categoria.</p></div><div class="hero-badge hero-badge-clickable" onclick="abrirEstatisticas()" role="button">📊 Dashboard</div></div>
                     <div id="dashboardEstatisticas" class="dashboard-estatisticas"></div>
                 </div>
 
                 <div id="telaRelatorios" class="tela page-shell">
-                    <div class="page-hero"><div><h2>Relatórios</h2><p>Resumo executivo com gols, assistências, cartões e tempo dos eventos.</p></div><div class="hero-badge">📜 Sofascore-style</div></div>
+                    <div class="page-hero"><div><h2>Relatórios</h2><p>Resumo executivo com gols, assistências, cartões e tempo dos eventos.</p></div><div class="hero-badge hero-badge-clickable" onclick="abrirRelatorios()" role="button">📜 Sofascore-style</div></div>
                     <div id="relatorioResumo" class="card" style="padding:18px; text-align:left;"></div>
                 </div>
 
                 <div id="telaHistorico" class="tela page-shell">
-                    <div class="page-hero"><div><h2>Histórico</h2><p>Competições passadas organizadas em cards e detalhes por partida.</p></div><div class="hero-badge">🕓 Histórico</div></div>
+                    <div class="page-hero"><div><h2>Histórico</h2></div><div class="hero-badge">🕓 Histórico</div></div>
                     <div id="listaCompeticiones" style="display:flex; flex-direction:column; gap:16px;"></div>
                 </div>
 
                 <div id="telaAdmin" class="tela page-shell">
-                    <div class="page-hero"><div><h2>Painel Administrativo</h2><p>Seções separadas para jogadores, equipes, sistema, Firebase e configurações.</p></div><div class="hero-badge">⚙ Admin</div></div>
+                    <div class="page-hero"><div><h2>Painel Administrativo</h2></div><div class="hero-badge">⚙ Admin</div></div>
                     <div class="dashboard-grid">
                         <div class="stat-card"><div class="stat-icon">👤</div><div><div class="stat-title">Jogadores</div><div class="stat-value" id="adminJogadores">0</div></div></div>
                         <div class="stat-card"><div class="stat-icon">🛡</div><div><div class="stat-title">Equipes</div><div class="stat-value" id="adminEquipes">0</div></div></div>
@@ -485,6 +489,7 @@
             <input id="searchJogadorEquipe" type="text" class="modal-sel-search" placeholder="🔍 Pesquisar jogador..." oninput="filtrarJogadoresEquipe()">
             <div id="listaJogadoresDisponiveis"></div>
             <div class="modal-sel-footer">
+                <button class="btn-blue btn-xs" onclick="fecharModalSelecionarJogador()">⬅ Voltar</button>
                 <span class="modal-sel-status">Selecione jogadores já cadastrados para montar a equipe.</span>
             </div>
         </div>
@@ -1061,8 +1066,11 @@
             if (telaPartidas && telaPartidas.classList.contains('ativa')) {
                 renderizarPlacarPartida();
             }
-            if ((telaRelatorios && telaRelatorios.classList.contains('ativa')) || (telaEstatisticas && telaEstatisticas.classList.contains('ativa'))) {
+            if (telaEstatisticas && telaEstatisticas.classList.contains('ativa')) {
                 renderizarDashboardEstatisticas();
+            }
+            if (telaRelatorios && telaRelatorios.classList.contains('ativa')) {
+                renderizarRelatorios();
             }
             if (telaHistorico && telaHistorico.classList.contains('ativa')) {
                 renderizarHistorico();
@@ -1159,12 +1167,14 @@
             equipeModalAtual = equipe;
             document.getElementById('modalEquipeTitulo').textContent = equipe;
             document.getElementById('searchJogadorEquipe').value = '';
+            document.body.classList.add('no-scroll');
             document.getElementById('modalSelecionarJogador').style.display = 'flex';
             renderizarListaJogadoresDisponiveis();
         }
 
         function fecharModalSelecionarJogador() {
             equipeModalAtual = null;
+            document.body.classList.remove('no-scroll');
             document.getElementById('modalSelecionarJogador').style.display = 'none';
         }
 
@@ -1866,13 +1876,50 @@
             dataAtual = new Date().toISOString().split('T')[0];
         }
 
-        function abrirRelatorios() {
-            mostrarTela('relatorios');
+        function abrirEstatisticas() {
+            mostrarTela('estatisticas');
             renderizarDashboardEstatisticas();
         }
 
+        function abrirRelatorios() {
+            mostrarTela('relatorios');
+            renderizarRelatorios();
+        }
+
         function exibirRelatorio() {
-            renderizarDashboardEstatisticas();
+            renderizarRelatorios();
+        }
+
+        function renderizarRelatorios() {
+            const container = document.getElementById('relatorioResumo');
+            if (!container) return;
+
+            const datas = Object.keys(relatoriosDiarios || {}).sort();
+            if (datas.length === 0) {
+                container.innerHTML = '<p style="color:#555; margin:0;">Nenhum relatório registrado ainda.</p>';
+                return;
+            }
+
+            let html = '';
+            datas.forEach(data => {
+                const relatorio = relatoriosDiarios[data];
+                const gols = relatorio.estatisticas ? Object.values(relatorio.estatisticas).reduce((acc, stats) => acc + (stats.gols || 0), 0) : 0;
+                const assistencias = relatorio.estatisticas ? Object.values(relatorio.estatisticas).reduce((acc, stats) => acc + (stats.assis || 0), 0) : 0;
+                const amarelos = relatorio.estatisticas ? Object.values(relatorio.estatisticas).reduce((acc, stats) => acc + (stats.amarelo || 0), 0) : 0;
+                const vermelhos = relatorio.estatisticas ? Object.values(relatorio.estatisticas).reduce((acc, stats) => acc + (stats.vermelho || 0), 0) : 0;
+
+                html += `
+                    <div class="relatorio-dia">
+                        <h3>${escapeHtml(data)}</h3>
+                        <p><strong>Gols:</strong> ${gols} | <strong>Assistências:</strong> ${assistencias} | <strong>Amarelos:</strong> ${amarelos} | <strong>Vermelhos:</strong> ${vermelhos}</p>
+                        <div class="stats-resumo">
+                            <div class="stat-box"><strong>Jogadores</strong><br>${Object.keys(relatorio.estatisticas || {}).length}</div>
+                            <div class="stat-box"><strong>Tempo de evento</strong><br>${escapeHtml(relatorio.data)}</div>
+                        </div>
+                    </div>`;
+            });
+
+            container.innerHTML = html;
         }
         async function salvar() {
             try {
