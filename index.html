@@ -328,11 +328,12 @@
                         <div class="topbar-subtitle" id="topbarSubtitle">Competição ativa • Atualização em tempo real</div>
                     </div>
                 </div>
-                <div class="topbar-right">
+                    <div class="topbar-right">
                     <div class="mode-pill"><span id="badgeModo">Somente Leitura</span></div>
                     <div class="mode-pill"><span class="status-dot"></span><span id="statusFirebase">Online</span></div>
                     <div class="mode-pill" id="relogioTopbar">--:--</div>
                     <button class="theme-toggle" onclick="alternarTema()">☀/☾</button>
+                    <button id="btnNovoDia" class="btn-orange admin-only btn-xs" onclick="novoDia()" style="display:none;">📅 Novo Dia</button>
                     <button id="btnPainelAdmin" class="btn-blue btn-xs" onclick="abrirPainelAdmin()">Painel do Administrador</button>
                     <button id="btnSairAdmin" class="btn-red btn-xs" onclick="sairPainelAdmin()" style="display:none;">Sair do Painel</button>
                 </div>
@@ -2093,6 +2094,59 @@
             }
         }
 
+        function novoDia() {
+            if (!verificarPermissao('iniciar novo dia')) return;
+
+            const confirmado = confirm("Deseja realmente iniciar um novo dia de competição? As estatísticas diárias serão reiniciadas, porém o ranking geral permanecerá preservado.");
+            if (!confirmado) return;
+
+            // Salvar o dia atual como relatório/dia
+            try {
+                const dataId = dataAtual || new Date().toISOString().split('T')[0];
+                const dataFormatada = new Date().toLocaleString('pt-BR');
+                const estatisticasDoDia = JSON.parse(JSON.stringify(estatisticasDia || {}));
+
+                const resumoEquipes = gerarResumoEquipes(estatisticasDoDia);
+                const estrategias = gerarEstrategias(estatisticasDoDia);
+
+                // Montar objeto do dia
+                const diaRegistro = {
+                    id: dataId,
+                    data: dataFormatada,
+                    estatisticas: estatisticasDoDia,
+                    resumoEquipes,
+                    estrategias,
+                    totalGols: Object.values(estatisticasDoDia || {}).reduce((s, p) => s + (p.gols || 0), 0),
+                    totalAssistencias: Object.values(estatisticasDoDia || {}).reduce((s, p) => s + (p.assis || 0), 0),
+                    totalAmarelos: Object.values(estatisticasDoDia || {}).reduce((s, p) => s + (p.amarelo || 0), 0),
+                    totalVermelhos: Object.values(estatisticasDoDia || {}).reduce((s, p) => s + (p.vermelho || 0), 0)
+                };
+
+                // salvar em relatoriosDiarios e tentar persistir via API externa
+                relatoriosDiarios[dataId] = { data: new Date(dataId).toLocaleDateString('pt-BR'), estrategias, resumoEquipes, estatisticas: estatisticasDoDia };
+                try { if (window.fs && window.fs.saveRelatorio) window.fs.saveRelatorio(dataId, relatoriosDiarios[dataId]).catch(()=>{}); } catch(e){}
+
+                // Também tentar salvar sob /dias/<dataId> se a API oferecer
+                try { if (window.fs && window.fs.saveDia) window.fs.saveDia(dataId, diaRegistro).catch(()=>{}); } catch(e){}
+
+            } catch (e) {
+                console.error('Erro ao salvar novo dia:', e);
+            }
+
+            // Resetar estatísticas do dia
+            estatisticasDia = {};
+            // Atualizar identificador do dia atual
+            dataAtual = new Date().toISOString().split('T')[0];
+
+            // Atualizar interface
+            salvar();
+            renderizarRelatorios();
+            renderizarHistorico();
+            renderizarDashboardEstatisticas();
+
+            alert('Novo dia iniciado. Estatísticas diárias reiniciadas.');
+        }
+
         function abrirModalCadastroJogador() {
             if (!verificarPermissao('cadastro de jogadores')) return;
 
@@ -2106,6 +2160,19 @@
         function fecharModalCadastroJogador() {
             document.getElementById('modalCadastroJogador').style.display = 'none';
         }
+
+        // Safety binding: ensure the add-player button triggers the modal
+        (function bindCadastroButton() {
+            try {
+                const area = document.getElementById('selecaoCadastro');
+                if (area) {
+                    const btn = area.querySelector('button');
+                    if (btn && !btn.getAttribute('onclick')) {
+                        btn.addEventListener('click', abrirModalCadastroJogador);
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        })();
 
         function previsualizarFotoCadastro(input) {
             const preview = document.getElementById('previewFotoCadastro');
