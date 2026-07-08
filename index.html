@@ -34,6 +34,33 @@
         .dashboard-card-subtitle { color: #64748b; font-size: 13px; margin-top: 4px; }
         .dashboard-card-total { background: rgba(15, 23, 42, 0.06); color: #0f172a; padding: 8px 12px; border-radius: 999px; font-weight: 700; min-width: 62px; text-align: center; }
         .ranking-list { display: flex; flex-direction: column; gap: 10px; }
+
+        /* Estatísticas - Rankings Dashboard */
+        .estatisticas-dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .estatisticas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .ranking-panel { background: #0b1220; color: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 12px 30px rgba(2,8,23,0.45); min-height: 320px; display: flex; flex-direction: column; transition: transform 0.28s ease, opacity 0.28s ease; }
+        .ranking-panel .panel-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+        .ranking-panel .panel-icon { font-size:20px; }
+        .ranking-panel .panel-title { font-weight:800; font-size:18px; letter-spacing:0.06em; }
+        .ranking-panel .panel-sub { font-size:13px; color:rgba(255,255,255,0.8); }
+        .ranking-panel .ranking-items { margin-top:6px; display:flex; flex-direction:column; gap:8px; overflow:auto; }
+        .ranking-item { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 6px; border-radius:10px; }
+        .ranking-item .left { display:flex; align-items:center; gap:10px; }
+        .ranking-item .medal { font-size:18px; width:36px; text-align:center; }
+        .ranking-item .nome { font-weight:700; }
+        .ranking-item .valor { font-weight:800; }
+        .ranking-panel.green { border: 2px solid rgba(34,197,85,0.12); }
+        .ranking-panel.blue { border: 2px solid rgba(96,165,250,0.12); }
+        .ranking-panel.yellow { border: 2px solid rgba(250,204,21,0.12); }
+        .ranking-panel.red { border: 2px solid rgba(239,68,68,0.12); }
+        .ranking-panel .panel-body { flex:1; display:flex; flex-direction:column; }
+        .fade-in { animation: fadeIn 360ms ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+
+        @media (max-width: 720px) {
+            .estatisticas-dashboard { grid-template-columns: 1fr; }
+            .ranking-panel { min-height: 220px; }
+        }
         @media (max-width: 900px) {
             .dashboard-estatisticas { grid-template-columns: 1fr; }
         }
@@ -390,8 +417,9 @@
                 </div>
 
                 <div id="telaEstatisticas" class="tela page-shell">
-                    <div class="page-hero"><div><h2>Estatísticas</h2><p>Dashboard moderno com rankings por categoria.</p></div><div class="hero-badge hero-badge-clickable" onclick="abrirEstatisticas()" role="button">📊 Dashboard</div></div>
-                    <div id="dashboardEstatisticas" class="dashboard-estatisticas"></div>
+                    <div id="estatisticasDashboard" class="estatisticas-dashboard">
+                        <!-- Ranking panels will be rendered here -->
+                    </div>
                 </div>
 
                 <div id="telaRelatorios" class="tela page-shell">
@@ -765,67 +793,69 @@
         }
 
         function renderizarDashboardEstatisticas() {
-            atualizarResumoDashboard();
-            const container = document.getElementById('dashboardEstatisticas');
+            // Build the rankings dashboard into the dedicated container
+            const container = document.getElementById('estatisticasDashboard') || document.getElementById('dashboardEstatisticas');
             if (!container) return;
 
-            const metadados = [
-                { chave: 'gols', titulo: 'ARTILHEIROS', subtitulo: 'Ranking Geral de Gols', classe: 'dashboard-card-green', sufixo: 'gols', label: 'gol' },
-                { chave: 'assis', titulo: 'ASSISTÊNCIAS', subtitulo: 'Ranking Geral de Assistências', classe: 'dashboard-card-blue', sufixo: 'assistências', label: 'assistência' },
-                { chave: 'amarelo', titulo: 'CARTÕES AMARELOS', subtitulo: 'Jogadores com mais cartões amarelos', classe: 'dashboard-card-yellow', sufixo: 'cartões', label: 'cartão amarelo' },
-                { chave: 'vermelho', titulo: 'CARTÕES VERMELHOS', subtitulo: 'Jogadores com mais cartões vermelhos', classe: 'dashboard-card-red', sufixo: 'cartões', label: 'cartão vermelho' }
+            const categorias = [
+                { chave: 'gols', titulo: 'ARTILHEIROS', subtitulo: 'Ranking Geral', classe: 'green', icone: '⚽', sufixo: 'gols' },
+                { chave: 'assis', titulo: 'ASSISTÊNCIAS', subtitulo: 'Ranking Geral', classe: 'blue', icone: '🅰', sufixo: 'assistências' },
+                { chave: 'amarelo', titulo: 'CARTÕES AMARELOS', subtitulo: 'Jogadores com mais cartões amarelos', classe: 'yellow', icone: '🟨', sufixo: 'cartões' },
+                { chave: 'vermelho', titulo: 'CARTÕES VERMELHOS', subtitulo: 'Jogadores com mais cartões vermelhos', classe: 'red', icone: '🟥', sufixo: 'cartões' }
             ];
 
             const jogadores = Object.keys(jogadoresStats || {})
                 .filter(nome => jogadoresStats[nome])
-                .map(nome => {
-                    const stats = normalizarJogador(nome, jogadoresStats[nome]);
-                    return { nome, foto: stats.foto || '', equipe: stats.equipe || 'Sem equipe', dados: stats };
-                });
+                .map(nome => ({ nome, dados: normalizarJogador(nome, jogadoresStats[nome]) }));
 
-            const html = metadados.map(metadata => {
-                const ranking = jogadores
-                    .map(jogador => ({
-                        ...jogador,
-                        valor: Number(jogador.dados[metadata.chave] || 0)
-                    }))
-                    .filter(jogador => jogador.valor > 0)
-                    .sort((a, b) => {
-                        if (b.valor !== a.valor) return b.valor - a.valor;
-                        return a.nome.localeCompare(b.nome, 'pt-BR');
-                    });
+            const criarLista = (chave) => {
+                return jogadores
+                    .map(j => ({ nome: j.nome, valor: Number(j.dados[chave] || 0) }))
+                    .filter(j => j.valor > 0)
+                    .sort((a, b) => b.valor - a.valor || a.nome.localeCompare(b.nome, 'pt-BR'));
+            };
 
-                const total = ranking.reduce((acc, jogador) => acc + jogador.valor, 0);
-                const linhas = ranking.length > 0
-                    ? ranking.map((jogador, index) => {
-                        const posicao = index < 3 ? ['🥇', '🥈', '🥉'][index] : `${index + 1}°`;
-                        return `
+            let html = '<div class="estatisticas-grid fade-in">';
+
+            categorias.forEach((cat, idx) => {
+                const ranking = criarLista(cat.chave);
+                const total = ranking.reduce((s, it) => s + it.valor, 0);
+
+                let itensHtml = '';
+                if (ranking.length === 0) {
+                    itensHtml = `<div style="color:rgba(255,255,255,0.75); padding:12px;">Nenhum jogador com ${cat.titulo.toLowerCase()} registrado ainda.</div>`;
+                } else {
+                    ranking.forEach((jog, i) => {
+                        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}º`;
+                        itensHtml += `
                             <div class="ranking-item">
-                                <div class="ranking-pos">${posicao}</div>
-                                <img class="ranking-foto" src="${jogador.foto || 'https://via.placeholder.com/100'}" alt="${escapeHtml(jogador.nome)}">
-                                <div class="ranking-info">
-                                    <div class="ranking-name">${escapeHtml(jogador.nome)}</div>
-                                    <div class="ranking-team">${escapeHtml(jogador.equipe)}</div>
-                                </div>
-                                <div class="ranking-value">${jogador.valor} ${metadata.sufixo}</div>
+                                <div class="left"><div class="medal">${medal}</div><div class="nome">${escapeHtml(jog.nome)}</div></div>
+                                <div class="valor">${jog.valor} ${cat.sufixo}</div>
                             </div>`;
-                    }).join('')
-                    : `<div class="ranking-empty">Nenhum jogador com ${metadata.label} registrado ainda.</div>`;
+                    });
+                }
 
-                return `
-                    <div class="dashboard-card ${metadata.classe}">
-                        <div class="dashboard-card-header">
+                html += `
+                    <div class="ranking-panel ${cat.classe} fade-in">
+                        <div class="panel-header">
+                            <div class="panel-icon">${cat.icone}</div>
                             <div>
-                                <div class="dashboard-card-title">${metadata.titulo}</div>
-                                <div class="dashboard-card-subtitle">${metadata.subtitulo}</div>
+                                <div class="panel-title">${cat.titulo}</div>
+                                <div class="panel-sub">${cat.subtitulo}</div>
                             </div>
-                            <div class="dashboard-card-total">${total}</div>
+                            <div style="margin-left:auto; font-weight:800; opacity:0.9;">${total}</div>
                         </div>
-                        <div class="ranking-list">${linhas}</div>
+                        <div class="panel-body">
+                            <div class="ranking-items">${itensHtml}</div>
+                        </div>
                     </div>`;
-            }).join('');
+            });
 
+            html += '</div>';
             container.innerHTML = html;
+
+            // Ensure equal height panels via JS if needed (flex/grid handles most cases)
+            // No further action required; CSS controls responsive layout.
         }
 
         function renderizarPlacarPartida() {
