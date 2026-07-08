@@ -5,7 +5,7 @@
     <title>Organizador de Futebol ⚽</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-        .tela { display: none; } .ativa { display: block; }
+        .tela { display: none; } .tela.ativa { display: block; } .tela.ativa.page-shell { display: flex; }
         .grid-jogadores { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
         .card { background: white; padding: 15px; border-radius: 10px; width: 150px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 10px; }
@@ -94,6 +94,137 @@
         .opcao-equipe-item { background: #f5f7fa; padding: 8px 10px; border-radius: 8px; }
         .acoes-card { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
         .foto-gerenciar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; margin-right: 10px; }
+
+        :root {
+            --bg: #f4f7fb;
+            --surface: #ffffff;
+            --surface-alt: #f8fafc;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: rgba(15, 23, 42, 0.08);
+            --accent: #3b82f6;
+            --accent-2: #22c55e;
+            --accent-3: #facc15;
+            --accent-4: #ef4444;
+            --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+        }
+
+        body.theme-dark {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-alt: #111827;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --border: rgba(148, 163, 184, 0.16);
+            --accent: #60a5fa;
+            --accent-2: #4ade80;
+            --accent-3: #facc15;
+            --accent-4: #f87171;
+            --shadow: 0 16px 38px rgba(2, 8, 23, 0.35);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Inter', 'Poppins', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        button, input, select { font: inherit; }
+        .app-shell { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 270px;
+            background: linear-gradient(180deg, var(--surface) 0%, var(--surface-alt) 100%);
+            border-right: 1px solid var(--border);
+            padding: 24px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; padding: 8px 10px; }
+        .brand-logo { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; font-size: 22px; background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: white; box-shadow: var(--shadow); }
+        .brand-name { font-size: 22px; font-weight: 800; letter-spacing: 0.04em; }
+        .brand-subtitle { font-size: 12px; color: var(--muted); }
+        .nav-links { display: flex; flex-direction: column; gap: 8px; }
+        .nav-item {
+            width: 100%; border: none; background: transparent; color: var(--text); padding: 12px 14px; border-radius: 14px; text-align: left; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease; cursor: pointer;
+        }
+        .nav-item:hover { background: rgba(59, 130, 246, 0.12); transform: translateX(2px); }
+        .nav-item.active { background: linear-gradient(90deg, rgba(59,130,246,0.18), rgba(34,197,85,0.12)); color: var(--accent); font-weight: 700; }
+        .sidebar-footer { margin-top: auto; padding: 12px; border-radius: 16px; background: rgba(59,130,246,0.08); color: var(--muted); font-size: 13px; }
+        .main-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .topbar {
+            background: rgba(255,255,255,0.75); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 24px;
+            display: flex; justify-content: space-between; align-items: center; gap: 16px;
+        }
+        body.theme-dark .topbar { background: rgba(15,23,42,0.8); }
+        .topbar-left, .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .icon-btn, .theme-toggle {
+            border: none; background: var(--surface); color: var(--text); border-radius: 999px; padding: 10px 12px; cursor: pointer; box-shadow: var(--shadow);
+        }
+        .topbar-title { font-size: 20px; font-weight: 800; }
+        .topbar-subtitle { font-size: 13px; color: var(--muted); }
+        .mode-pill { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 999px; background: var(--surface); box-shadow: var(--shadow); }
+        .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(34,197,85,0.12); color: var(--accent-2); font-size: 13px; font-weight: 600; }
+        .chip.admin { background: rgba(59,130,246,0.12); color: var(--accent); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 0 4px rgba(34,197,85,0.16); }
+        .content-panel { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+        .page-hero { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(34,197,85,0.12)); border: 1px solid var(--border); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); }
+        .page-hero h2 { margin: 0 0 6px 0; font-size: 24px; }
+        .page-hero p { margin: 0; color: var(--muted); }
+        .hero-badge { padding: 10px 12px; border-radius: 999px; background: var(--surface); color: var(--accent); font-weight: 700; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 16px; }
+        .dashboard-grid.gap-2 { grid-template-columns: 1.2fr 0.8fr; }
+        .stat-card, .glass-card, .card, .secao-equipe, .relatorio-dia, .modal-conteudo, .configuracao-jogo, .cronometro-container, .secao-gerenciamento, .jogador-gerenciar {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card:hover, .card:hover, .secao-equipe:hover, .relatorio-dia:hover, .modal-conteudo:hover, .configuracao-jogo:hover, .cronometro-container:hover, .secao-gerenciamento:hover, .jogador-gerenciar:hover { transform: translateY(-2px); }
+        .stat-card { padding: 18px; display: flex; align-items: center; gap: 14px; }
+        .stat-icon { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; background: rgba(59,130,246,0.12); color: var(--accent); }
+        .stat-title { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
+        .stat-value { font-size: 28px; font-weight: 800; margin-top: 4px; }
+        .card { padding: 16px; text-align: center; }
+        .card img { width: 92px; height: 92px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 12px; border: 3px solid rgba(59,130,246,0.08); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .section-header h3 { margin: 0; }
+        .grid-jogadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .grid-jogadores .card { min-height: 250px; }
+        .btn, button { padding: 10px 14px; cursor: pointer; border: none; border-radius: 999px; color: white; margin: 4px; transition: transform 0.2s ease, opacity 0.2s ease; }
+        .btn:hover, button:hover { transform: translateY(-1px); }
+        .btn-green { background: var(--accent-2); } .btn-red { background: var(--accent-4); } .btn-blue { background: var(--accent); } .btn-orange { background: var(--accent-3); color: #111827; }
+        .btn-xs { padding: 7px 10px; font-size: 12px; }
+        .timeline { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+        .timeline-item { padding: 12px 14px; border-radius: 14px; background: var(--surface-alt); border: 1px solid var(--border); }
+        .timeline-time { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+        .timeline-text { font-weight: 600; }
+        .stat-list { display: flex; flex-direction: column; gap: 10px; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .stat-row:last-child { border-bottom: none; }
+        .page-shell { display: flex; flex-direction: column; gap: 16px; }
+        .empty-state { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--border); border-radius: 16px; }
+        @media (max-width: 1100px) {
+            .dashboard-grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+            .dashboard-grid.gap-2 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 900px) {
+            .app-shell { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .nav-links { flex-direction: row; flex-wrap: wrap; }
+            .nav-item { width: auto; flex: 1; min-width: 120px; }
+            .content-panel { padding: 16px; }
+        }
+        @media (max-width: 640px) {
+            .topbar { flex-direction: column; align-items: flex-start; }
+            .topbar-right { width: 100%; justify-content: space-between; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .page-hero { flex-direction: column; align-items: flex-start; }
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -141,124 +272,153 @@
 </head>
 <body>
 
-    <div id="barraModoAcesso">
-        <div id="badgeModo">Somente Leitura</div>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <button id="btnPainelAdmin" class="btn-blue btn-xs" onclick="abrirPainelAdmin()">Painel do Administrador</button>
-            <button id="btnSairAdmin" class="btn-red btn-xs" onclick="sairPainelAdmin()" style="display:none;">Sair do Painel de Administrador</button>
-        </div>
-    </div>
-
-    <div id="telaMenu" class="tela ativa">
-        <h2>Cadastro e Seleção 📝</h2>
-        <div id="selecaoCadastro" class="admin-only" style="display:none;">
-            <button class="btn-green" onclick="abrirModalCadastroJogador()">➕ Adicionar Jogador</button>
-        </div>
-        <button class="btn-orange" onclick="abrirRelatorios()">📊 Ver Relatórios</button>
-        <div id="selecaoGerenciamento" class="admin-only" style="display:none;">
-            <button class="btn-blue" onclick="abrirGerenciamento()">⚙️ Gerenciar Equipes</button>
-        </div>
-        <button class="btn-blue" onclick="abrirHistorico()">📚 Histórico</button>
-        <div id="selecaoPartida" class="admin-only" style="display:none;">
-            <button class="btn-blue" onclick="iniciarJogo()" style="font-size: 18px;">Começar Pelada ⚽</button>
-            <button class="btn-orange" onclick="encerrarDia()" style="font-size: 16px;">📅 Encerrar Dia</button>
-            <button class="btn-green" onclick="finalizarCompeticao()" style="font-size: 16px; margin-top: 10px; width: 100%;">🏆 Finalizar Competição</button>
-        </div>
-        <div id="gridJogadores" class="grid-jogadores"></div>
-        <br><hr>
-    </div>
-
-    <div id="telaConfiguracao" class="tela">
-        <div class="admin-only">
-            <h2>⚙️ Configuração da Partida</h2>
-            <div class="configuracao-jogo">
-                <div class="config-opcao">
-                    <label class="config-label">⏱️ Duração da Partida (minutos):</label>
-                    <input type="number" id="duracao" class="config-input" value="7" min="1" max="60" data-admin-control>
-                </div>
-                <div class="config-opcao">
-                    <label class="config-label">⚽ Gols para Vitória Automática:</label>
-                    <input type="number" id="golsVitoria" class="config-input" value="2" min="1" max="10" data-admin-control>
-                </div>
-                <div class="config-opcao">
-                    <input type="checkbox" id="primeiraPartida" class="config-checkbox" data-admin-control>
-                    <label class="config-label">📌 Modo Primeira Partida (vitória com 3 gols)</label>
-                </div>
-                <div class="config-opcao">
-                    <input type="checkbox" id="encerramentoAutomatico" class="config-checkbox" checked data-admin-control>
-                    <label class="config-label">🏁 Ativar Encerramento Automático</label>
-                </div>
-                <p style="color: #666; font-size: 12px; margin-top: 15px;">
-                    💡 Modo Primeira Partida: muda a vitória para 3 gols automaticamente
-                </p>
-            </div>
-            <button class="btn-blue" onclick="iniciarPartida()" style="font-size: 16px; padding: 15px 30px;" data-admin-control>Começar Partida ⚽</button>
-            <button class="btn-red" onclick="voltarMenu()" style="font-size: 14px;">Cancelar 🔙</button>
-        </div>
-    </div>
-
-    <div id="telaPlacar" class="tela">
-        <div class="cronometro-container">
-            <div class="estado-partida" id="estadoPartida"></div>
-            <div class="cronometro-display" id="cronometro">07:00</div>
-            <div class="cronometro-info">
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">⚽</div>
                 <div>
-                    <strong id="placarTime1">Equipe 1</strong>
-                    <span id="golsTime1">0</span>
-                </div>
-                <div style="font-size: 24px; font-weight: bold;">×</div>
-                <div>
-                    <strong id="placarTime2">Equipe 2</strong>
-                    <span id="golsTime2">0</span>
+                    <div class="brand-name">FUTIB</div>
+                    <div class="brand-subtitle">Painel esportivo</div>
                 </div>
             </div>
-            <div class="cronometro-botoes admin-only">
-                <button class="btn-cronometro" onclick="iniciarCronometro()" id="btnIniciar" data-admin-control>▶ Iniciar</button>
-                <button class="btn-cronometro" onclick="pausarCronometro()" id="btnPausar" style="display:none;" data-admin-control>⏸ Pausar</button>
-                <button class="btn-cronometro" onclick="continuarCronometro()" id="btnContinuar" style="display:none;" data-admin-control>▶ Continuar</button>
-                <button class="btn-cronometro" onclick="abrirAcrescimos()" data-admin-control>➕ Acréscimo</button>
-                <button class="btn-cronometro" onclick="encerrarPartidaManual()" style="background: rgba(244,67,54,0.3); border-color: #f44336;" data-admin-control>⏹ Encerrar</button>
+            <div class="nav-links">
+                <button class="nav-item active" data-view="dashboard" onclick="mostrarTela('dashboard')">🏠 Dashboard</button>
+                <button class="nav-item" data-view="jogadores" onclick="mostrarTela('jogadores')">👤 Jogadores</button>
+                <button class="nav-item" data-view="equipes" onclick="mostrarTela('equipes')">🛡 Equipes</button>
+                <button class="nav-item" data-view="partidas" onclick="mostrarTela('partidas')">⚽ Partidas</button>
+                <button class="nav-item" data-view="estatisticas" onclick="mostrarTela('estatisticas')">📊 Estatísticas</button>
+                <button class="nav-item" data-view="relatorios" onclick="mostrarTela('relatorios')">📜 Relatórios</button>
+                <button class="nav-item" data-view="historico" onclick="mostrarTela('historico')">🕓 Histórico</button>
+                <button class="nav-item admin-only" data-view="admin" onclick="mostrarTela('admin')" style="display:none;">⚙ Painel Administrador</button>
+                <button class="nav-item" onclick="sairPainelAdmin()">🚪 Sair</button>
             </div>
-        </div>
-
-        <h2>Placar em Tempo Real ⏱️</h2>
-        <div id="placarEquipes"></div>
-        <br>
-        <div class="admin-only">
-            <button class="btn-blue" onclick="finalizarPartida()" data-admin-control>Finalizar Partida e Rodar 🔄</button>
-        </div>
-        <button class="btn-red" onclick="voltarMenu()">Voltar ao Menu 🔙</button>
-    </div>
-
-    <div id="telaRelatorios" class="tela">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
-            <div>
-                <h2 style="margin:0;">Estatísticas 📊</h2>
-                <p style="margin:4px 0 0; color:#64748b;">Ranking geral com atualização automática a partir das estatísticas salvas no Firebase.</p>
+            <div class="sidebar-footer">
+                <div class="chip"><span class="status-dot"></span> Firebase Online</div>
+                <div style="margin-top:10px;">Acesso rápido para gestão da pelada.</div>
             </div>
-            <button class="btn-red" onclick="voltarMenu()">Voltar ao Menu 🔙</button>
-        </div>
-        <div id="dashboardEstatisticas" class="dashboard-estatisticas"></div>
-    </div>
+        </aside>
 
-    <div id="telaGerenciamento" class="tela">
-        <h2>⚙️ Gerenciar Equipes</h2>
-        <div class="gerenciamento-equipes">
-            <div id="containerEquipesGerenciamento" class="lista-gerenciamento" style="display:flex; flex-wrap:wrap; gap:15px; width:100%;"></div>
-        </div>
-        <div style="margin-top: 20px; background: white; padding: 15px; border-radius: 8px;">
-            <h3 style="color: #ff9800; margin-top: 0;">👥 Jogadores Reservas</h3>
-            <div id="lista-reservas" class="lista-gerenciamento"></div>
-        </div>
-        <br>
-        <button class="btn-blue" onclick="voltarMenu()">Voltar ao Menu 🔙</button>
-    </div>
+        <main class="main-panel">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <div>
+                        <div class="topbar-title" id="topbarTitle">FUTIB Dashboard</div>
+                        <div class="topbar-subtitle" id="topbarSubtitle">Competição ativa • Atualização em tempo real</div>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="mode-pill"><span id="badgeModo">Somente Leitura</span></div>
+                    <div class="mode-pill"><span class="status-dot"></span><span id="statusFirebase">Online</span></div>
+                    <div class="mode-pill" id="relogioTopbar">--:--</div>
+                    <button class="theme-toggle" onclick="alternarTema()">☀/☾</button>
+                    <button id="btnPainelAdmin" class="btn-blue btn-xs" onclick="abrirPainelAdmin()">Painel do Administrador</button>
+                    <button id="btnSairAdmin" class="btn-red btn-xs" onclick="sairPainelAdmin()" style="display:none;">Sair do Painel</button>
+                </div>
+            </header>
 
-    <div id="telaHistorico" class="tela">
-        <h2>📚 Histórico de Competições</h2>
-        <div id="listaCompeticiones" style="display: flex; flex-direction: column; gap: 15px;"></div>
-        <br>
-        <button class="btn-red" onclick="voltarMenu()">Voltar ao Menu 🔙</button>
+            <section class="content-panel">
+                <div id="telaDashboard" class="tela ativa page-shell">
+                    <div class="page-hero">
+                        <div>
+                            <h2>Resumo da competição</h2>
+                            <p>Visão geral instantânea do estado atual da pelada, jogadores, estatísticas e partidas.</p>
+                        </div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                            <button class="btn-green" onclick="iniciarJogo()">▶ Iniciar partida</button>
+                            <div class="hero-badge" id="heroBadge">Modo Visualização</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="stat-card"><div class="stat-icon">👤</div><div><div class="stat-title">Jogadores</div><div class="stat-value" id="statsJogadores">0</div></div></div>
+                        <div class="stat-card"><div class="stat-icon">🛡</div><div><div class="stat-title">Equipes</div><div class="stat-value" id="statsEquipes">0</div></div></div>
+                        <div class="stat-card"><div class="stat-icon">⚽</div><div><div class="stat-title">Partidas</div><div class="stat-value" id="statsPartidas">0</div></div></div>
+                    </div>
+                    <div class="dashboard-grid gap-2">
+                        <div class="stat-card"><div class="stat-icon">⚽</div><div><div class="stat-title">Artilheiro</div><div class="stat-value" id="statsArtilheiro">—</div><div class="topbar-subtitle" id="statsArtilheiroDetalhes">0 gols</div></div></div>
+                        <div class="stat-card"><div class="stat-icon">🅰</div><div><div class="stat-title">Assistente</div><div class="stat-value" id="statsAssistente">—</div><div class="topbar-subtitle" id="statsAssistenteDetalhes">0 assistências</div></div></div>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="stat-card"><div class="stat-icon">🕓</div><div><div class="stat-title">Última partida</div><div class="stat-value" id="statsUltimaPartida">—</div></div></div>
+                        <div class="stat-card"><div class="stat-icon">📊</div><div><div class="stat-title">Status</div><div class="stat-value" id="statsStatus">Em espera</div></div></div>
+                        <div class="stat-card"><div class="stat-icon">⚙</div><div><div class="stat-title">Modo</div><div class="stat-value" id="statsModo">Leitura</div></div></div>
+                    </div>
+                </div>
+
+                <div id="telaJogadores" class="tela page-shell">
+                    <div class="page-hero"><div><h2>Jogadores</h2><p>Visão centralizada com cards, foto e estatísticas rápidas.</p></div><div class="hero-badge">👤 Cadastro</div></div>
+                    <div id="selecaoCadastro" class="admin-only" style="display:none; margin-bottom:12px;"><button class="btn-green" onclick="abrirModalCadastroJogador()">➕ Adicionar Jogador</button></div>
+                    <div id="gridJogadores" class="grid-jogadores"></div>
+                </div>
+
+                <div id="telaEquipes" class="tela page-shell">
+                    <div class="page-hero"><div><h2>Equipes</h2><p>Cards com organização visual de cada equipe e seus jogadores.</p></div><div class="hero-badge">🛡 Gerenciamento</div></div>
+                    <div id="containerEquipesGerenciamento" class="grid-jogadores"></div>
+                </div>
+
+                <div id="telaPartidas" class="tela page-shell">
+                    <div class="page-hero"><div><h2>Partidas</h2><p>Controle limpo do placar, cronômetro e ações de partida.</p></div><div class="hero-badge">⚽ Ao vivo</div></div>
+                    <div class="card" style="padding:18px; text-align:left;">
+                        <div class="section-header"><h3>Configuração rápida</h3><div class="chip">⚙</div></div>
+                        <div class="config-opcao"><label class="config-label">⏱️ Duração da partida</label><input type="number" id="duracao" class="config-input" value="7" min="1" max="60" data-admin-control></div>
+                        <div class="config-opcao"><label class="config-label">⚽ Gols para vitória</label><input type="number" id="golsVitoria" class="config-input" value="2" min="1" max="10" data-admin-control></div>
+                        <div class="config-opcao"><input type="checkbox" id="primeiraPartida" class="config-checkbox" data-admin-control><label class="config-label">📌 Primeira partida (3 gols)</label></div>
+                        <div class="config-opcao"><input type="checkbox" id="encerramentoAutomatico" class="config-checkbox" checked data-admin-control><label class="config-label">🏁 Encerramento automático</label></div>
+                        <div class="section-header"><h3>Ações</h3><div class="chip">▶</div></div>
+                        <button class="btn-green" onclick="iniciarPartida()" data-admin-control>▶ Começar partida</button>
+                        <button class="btn-blue" onclick="mostrarTela('dashboard')">← Voltar</button>
+                    </div>
+                    <div class="cronometro-container">
+                        <div class="estado-partida" id="estadoPartida"></div>
+                        <div class="cronometro-display" id="cronometro">07:00</div>
+                        <div class="cronometro-info">
+                            <div><strong id="placarTime1">Equipe 1</strong><span id="golsTime1">0</span></div>
+                            <div style="font-size:24px;font-weight:bold;">×</div>
+                            <div><strong id="placarTime2">Equipe 2</strong><span id="golsTime2">0</span></div>
+                        </div>
+                        <div class="cronometro-botoes admin-only">
+                            <button class="btn-cronometro" onclick="iniciarCronometro()" id="btnIniciar" data-admin-control>▶ Iniciar</button>
+                            <button class="btn-cronometro" onclick="pausarCronometro()" id="btnPausar" style="display:none;" data-admin-control>⏸ Pausar</button>
+                            <button class="btn-cronometro" onclick="continuarCronometro()" id="btnContinuar" style="display:none;" data-admin-control>▶ Continuar</button>
+                            <button class="btn-cronometro" onclick="abrirAcrescimos()" data-admin-control>➕ Acréscimo</button>
+                            <button class="btn-cronometro" onclick="encerrarPartidaManual()" style="background: rgba(244,67,54,0.3); border-color: #f44336;" data-admin-control>⏹ Encerrar</button>
+                        </div>
+                    </div>
+                    <div class="card" style="padding:20px; text-align:left;">
+                        <div class="section-header"><h3>Placar em tempo real</h3><div class="chip">⚽ Evento</div></div>
+                        <div id="placarEquipes"></div>
+                    </div>
+                    <div class="admin-only" style="display:none;"><button class="btn-blue" onclick="finalizarPartida()" data-admin-control>Finalizar Partida e Rodar 🔄</button></div>
+                </div>
+
+                <div id="telaEstatisticas" class="tela page-shell">
+                    <div class="page-hero"><div><h2>Estatísticas</h2><p>Dashboard moderno com rankings por categoria.</p></div><div class="hero-badge">📊 Dashboard</div></div>
+                    <div id="dashboardEstatisticas" class="dashboard-estatisticas"></div>
+                </div>
+
+                <div id="telaRelatorios" class="tela page-shell">
+                    <div class="page-hero"><div><h2>Relatórios</h2><p>Resumo executivo com gols, assistências, cartões e tempo dos eventos.</p></div><div class="hero-badge">📜 Sofascore-style</div></div>
+                    <div id="relatorioResumo" class="card" style="padding:18px; text-align:left;"></div>
+                </div>
+
+                <div id="telaHistorico" class="tela page-shell">
+                    <div class="page-hero"><div><h2>Histórico</h2><p>Competições passadas organizadas em cards e detalhes por partida.</p></div><div class="hero-badge">🕓 Histórico</div></div>
+                    <div id="listaCompeticiones" style="display:flex; flex-direction:column; gap:16px;"></div>
+                </div>
+
+                <div id="telaAdmin" class="tela page-shell">
+                    <div class="page-hero"><div><h2>Painel Administrativo</h2><p>Seções separadas para jogadores, equipes, sistema, Firebase e configurações.</p></div><div class="hero-badge">⚙ Admin</div></div>
+                    <div class="dashboard-grid">
+                        <div class="stat-card"><div class="stat-icon">👤</div><div><div class="stat-title">Jogadores</div><div class="stat-value" id="adminJogadores">0</div></div></div>
+                        <div class="stat-card"><div class="stat-icon">🛡</div><div><div class="stat-title">Equipes</div><div class="stat-value" id="adminEquipes">0</div></div></div>
+                        <div class="stat-card"><div class="stat-icon">☁</div><div><div class="stat-title">Firebase</div><div class="stat-value">Online</div></div></div>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="card" style="text-align:left;"><h3>⚙ Sistema</h3><div class="stat-list"><div class="stat-row"><span>Modo administrador</span><strong id="adminModoStatus">Desativado</strong></div><div class="stat-row"><span>Partidas</span><strong id="adminPartidas">0</strong></div><div class="stat-row"><span>Relatórios</span><strong id="adminRelatorios">0</strong></div></div></div>
+                        <div class="card" style="text-align:left;"><h3>🧰 Ações</h3><div class="stat-list"><div class="stat-row"><span>Reset</span><button class="btn-red btn-xs" onclick="resetarTudo()">Resetar</button></div><div class="stat-row"><span>Encerrar dia</span><button class="btn-orange btn-xs" onclick="encerrarDia()">Encerrar</button></div><div class="stat-row"><span>Finalizar</span><button class="btn-green btn-xs" onclick="finalizarCompeticao()">Finalizar</button></div></div></div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
     <div id="modalCadastroJogador" class="modal-edicao">
@@ -591,6 +751,7 @@
         }
 
         function renderizarDashboardEstatisticas() {
+            atualizarResumoDashboard();
             const container = document.getElementById('dashboardEstatisticas');
             if (!container) return;
 
@@ -766,26 +927,114 @@
             salvar();
         }
 
-        function atualizarInterfacePorPermissao() {
-            const telaMenu = document.getElementById('telaMenu');
-            const telaPlacar = document.getElementById('telaPlacar');
-            const telaRelatorios = document.getElementById('telaRelatorios');
-            const telaGerenciamento = document.getElementById('telaGerenciamento');
+        function alternarTema() {
+            const dark = document.body.classList.toggle('theme-dark');
+            const botao = document.querySelector('.theme-toggle');
+            if (botao) {
+                botao.textContent = dark ? '☾' : '☀';
+            }
+            try {
+                localStorage.setItem('futib-theme', dark ? 'dark' : 'light');
+            } catch (e) {}
+        }
 
-            if (telaMenu && telaMenu.classList.contains('ativa')) {
+        function aplicarTemaSalvo() {
+            try {
+                const temaSalvo = localStorage.getItem('futib-theme');
+                if (temaSalvo === 'dark') {
+                    document.body.classList.add('theme-dark');
+                } else {
+                    document.body.classList.remove('theme-dark');
+                }
+            } catch (e) {}
+            const botao = document.querySelector('.theme-toggle');
+            if (botao) {
+                botao.textContent = document.body.classList.contains('theme-dark') ? '☾' : '☀';
+            }
+        }
+
+        function atualizarResumoDashboard() {
+            const jogadores = Object.keys(jogadoresStats || {}).filter(nome => jogadoresStats[nome]).map(nome => normalizarJogador(nome, jogadoresStats[nome]));
+            const equipesAtivas = new Set(jogadores.map(j => j.equipe).filter(Boolean)).size;
+            const artilheiro = [...jogadores].sort((a, b) => (Number(b.gols || 0) - Number(a.gols || 0)) || a.nome.localeCompare(b.nome, 'pt-BR'))[0];
+            const assistente = [...jogadores].sort((a, b) => (Number(b.assis || 0) - Number(a.assis || 0)) || a.nome.localeCompare(b.nome, 'pt-BR'))[0];
+            const relatorios = Object.keys(relatoriosDiarios || {});
+
+            const elementos = {
+                statsJogadores: document.getElementById('statsJogadores'),
+                statsEquipes: document.getElementById('statsEquipes'),
+                statsPartidas: document.getElementById('statsPartidas'),
+                statsArtilheiro: document.getElementById('statsArtilheiro'),
+                statsArtilheiroDetalhes: document.getElementById('statsArtilheiroDetalhes'),
+                statsAssistente: document.getElementById('statsAssistente'),
+                statsAssistenteDetalhes: document.getElementById('statsAssistenteDetalhes'),
+                statsUltimaPartida: document.getElementById('statsUltimaPartida'),
+                statsStatus: document.getElementById('statsStatus'),
+                statsModo: document.getElementById('statsModo'),
+                heroBadge: document.getElementById('heroBadge')
+            };
+
+            if (elementos.statsJogadores) elementos.statsJogadores.textContent = jogadores.length;
+            if (elementos.statsEquipes) elementos.statsEquipes.textContent = equipesAtivas;
+            if (elementos.statsPartidas) elementos.statsPartidas.textContent = relatorios.length;
+            if (elementos.statsArtilheiro) elementos.statsArtilheiro.textContent = artilheiro ? artilheiro.nome : '—';
+            if (elementos.statsArtilheiroDetalhes) elementos.statsArtilheiroDetalhes.textContent = artilheiro ? `${Number(artilheiro.gols || 0)} gols` : '0 gols';
+            if (elementos.statsAssistente) elementos.statsAssistente.textContent = assistente ? assistente.nome : '—';
+            if (elementos.statsAssistenteDetalhes) elementos.statsAssistenteDetalhes.textContent = assistente ? `${Number(assistente.assis || 0)} assistências` : '0 assistências';
+            if (elementos.statsUltimaPartida) elementos.statsUltimaPartida.textContent = relatorios.length > 0 ? relatorios[relatorios.length - 1] : '—';
+            if (elementos.statsStatus) elementos.statsStatus.textContent = partidaEncerrada ? 'Encerrada' : (cronometroRodando ? 'Em andamento' : 'Em espera');
+            if (elementos.statsModo) elementos.statsModo.textContent = modoAdministrador ? 'Admin' : 'Leitura';
+            if (elementos.heroBadge) elementos.heroBadge.textContent = modoAdministrador ? 'Modo Admin' : 'Modo Visualização';
+        }
+
+        function mostrarTela(nomeTela) {
+            const mapaTelas = {
+                dashboard: 'telaDashboard',
+                jogadores: 'telaJogadores',
+                equipes: 'telaEquipes',
+                partidas: 'telaPartidas',
+                estatisticas: 'telaEstatisticas',
+                relatorios: 'telaRelatorios',
+                historico: 'telaHistorico',
+                admin: 'telaAdmin',
+                menu: 'telaDashboard'
+            };
+
+            document.querySelectorAll('.tela').forEach(el => el.classList.remove('ativa'));
+            const idTela = mapaTelas[nomeTela] || nomeTela;
+            const telaAlvo = document.getElementById(idTela);
+            if (telaAlvo) {
+                telaAlvo.classList.add('ativa');
+            }
+
+            document.querySelectorAll('.nav-item').forEach(botao => {
+                const view = botao.getAttribute('data-view');
+                botao.classList.toggle('active', view === nomeTela);
+            });
+        }
+
+        function atualizarInterfacePorPermissao() {
+            const telaJogadores = document.getElementById('telaJogadores');
+            const telaEquipes = document.getElementById('telaEquipes');
+            const telaPartidas = document.getElementById('telaPartidas');
+            const telaRelatorios = document.getElementById('telaRelatorios');
+            const telaEstatisticas = document.getElementById('telaEstatisticas');
+            const telaHistorico = document.getElementById('telaHistorico');
+
+            if (telaJogadores && telaJogadores.classList.contains('ativa')) {
                 renderizarGrid();
             }
-            if (telaGerenciamento && telaGerenciamento.classList.contains('ativa')) {
+            if (telaEquipes && telaEquipes.classList.contains('ativa')) {
                 renderizarGerenciamento();
             }
-            if (telaPlacar && telaPlacar.classList.contains('ativa')) {
+            if (telaPartidas && telaPartidas.classList.contains('ativa')) {
                 renderizarPlacarPartida();
             }
-            if (telaRelatorios && telaRelatorios.classList.contains('ativa')) {
-                const selectDia = document.getElementById('selectDia');
-                if (selectDia && selectDia.value) {
-                    exibirRelatorio();
-                }
+            if ((telaRelatorios && telaRelatorios.classList.contains('ativa')) || (telaEstatisticas && telaEstatisticas.classList.contains('ativa'))) {
+                renderizarDashboardEstatisticas();
+            }
+            if (telaHistorico && telaHistorico.classList.contains('ativa')) {
+                renderizarHistorico();
             }
         }
 
@@ -831,6 +1080,7 @@
             if (pinDigitado === PIN_ADMIN) {
                 modoAdministrador = true;
                 atualizarModoAcesso();
+                mostrarTela('admin');
                 alert('Painel do administrador ativado.');
             } else {
                 modoAdministrador = false;
@@ -842,7 +1092,7 @@
         function sairPainelAdmin() {
             modoAdministrador = false;
             atualizarModoAcesso();
-            voltarMenu();
+            mostrarTela('dashboard');
             alert('Sessão administrativa encerrada.');
         }
 
@@ -1021,24 +1271,27 @@
                 alert("Selecione pelo menos um jogador!");
                 return;
             }
-            
-            // Mostrar tela de configuração
-            document.getElementById('telaMenu').classList.remove('ativa');
-            document.getElementById('telaConfiguracao').classList.add('ativa');
+
+            mostrarTela('partidas');
         }
 
         function iniciarPartida() {
             if (!verificarPermissao('início de partida')) return;
 
             // Carregar configurações
-            configPartida.duracao = parseInt(document.getElementById('duracao').value);
-            configPartida.primeiraPartida = document.getElementById('primeiraPartida').checked;
-            configPartida.encerramentoAutomatico = document.getElementById('encerramentoAutomatico').checked;
+            const duracaoInput = document.getElementById('duracao');
+            const golsVitoriaInput = document.getElementById('golsVitoria');
+            const primeiraPartidaInput = document.getElementById('primeiraPartida');
+            const encerramentoAutomaticoInput = document.getElementById('encerramentoAutomatico');
+
+            configPartida.duracao = parseInt(duracaoInput ? duracaoInput.value : 7);
+            configPartida.primeiraPartida = primeiraPartidaInput ? primeiraPartidaInput.checked : false;
+            configPartida.encerramentoAutomatico = encerramentoAutomaticoInput ? encerramentoAutomaticoInput.checked : true;
             
             if (configPartida.primeiraPartida) {
                 configPartida.golsVitoria = 3;
             } else {
-                configPartida.golsVitoria = parseInt(document.getElementById('golsVitoria').value);
+                configPartida.golsVitoria = parseInt(golsVitoriaInput ? golsVitoriaInput.value : 2);
             }
             
             // Registrar início da competição se ainda não iniciada
@@ -1074,8 +1327,7 @@
             
             // Limpar e atualizar display
             atualizarCronometroDisplay();
-            document.getElementById('telaConfiguracao').classList.remove('ativa');
-            document.getElementById('telaPlacar').classList.add('ativa');
+            mostrarTela('partidas');
         }
 
         function formatarTempo(segundos) {
@@ -1477,8 +1729,7 @@
         }
 
         function abrirRelatorios() {
-            document.getElementById('telaMenu').classList.remove('ativa');
-            document.getElementById('telaRelatorios').classList.add('ativa');
+            mostrarTela('relatorios');
             renderizarDashboardEstatisticas();
         }
 
@@ -1550,8 +1801,7 @@
             if (!verificarPermissao('gerenciamento de equipes')) return;
 
             renderizarGerenciamento();
-            document.getElementById('telaMenu').classList.remove('ativa');
-            document.getElementById('telaGerenciamento').classList.add('ativa');
+            mostrarTela('equipes');
         }
 
         function renderizarGerenciamento() {
@@ -1906,8 +2156,7 @@
 
         function abrirHistorico() {
             renderizarHistorico();
-            document.getElementById('telaMenu').classList.remove('ativa');
-            document.getElementById('telaHistorico').classList.add('ativa');
+            mostrarTela('historico');
         }
 
         function renderizarHistorico() {
@@ -2018,13 +2267,8 @@
             }
         }
 
-        function voltarMenu() { 
-            document.getElementById('telaPlacar').classList.remove('ativa');
-            document.getElementById('telaConfiguracao').classList.remove('ativa');
-            document.getElementById('telaRelatorios').classList.remove('ativa');
-            document.getElementById('telaGerenciamento').classList.remove('ativa');
-            document.getElementById('telaHistorico').classList.remove('ativa');
-            document.getElementById('telaMenu').classList.add('ativa');
+        function voltarMenu() {
+            mostrarTela('dashboard');
             
             // Limpar cronômetro
             cronometroRodando = false;
@@ -2043,6 +2287,7 @@
             window.fs.loadInitialData().catch(()=>{});
         }
 
+        aplicarTemaSalvo();
         atualizarModoAcesso();
         renderizarGrid();
     </script>
