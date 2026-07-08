@@ -62,9 +62,10 @@
         .config-label { flex: 1; font-weight: bold; }
         .config-input { padding: 8px; border: 1px solid #ddd; border-radius: 5px; width: 150px; }
         .config-checkbox { width: 20px; height: 20px; cursor: pointer; }
-        .cronometro-container { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
-        .cronometro-display { font-size: 72px; font-weight: bold; font-family: 'Courier New', monospace; margin: 20px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .cronometro-info { display: flex; justify-content: space-around; margin-bottom: 15px; font-size: 14px; }
+        .cronometro-container { background: #000; color: #fff; padding: 24px 20px; border-radius: 24px; text-align: center; margin-bottom: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); position: relative; }
+        .cronometro-container::before, .cronometro-container::after { content: '──────────────'; display: block; letter-spacing: 2px; color: #666; margin: 8px auto; }
+        .cronometro-display { font-size: 88px; font-weight: 800; font-family: 'Courier New', monospace; margin: 8px 0; letter-spacing: 0.15em; }
+        .cronometro-info { display: flex; justify-content: space-around; gap: 16px; margin-bottom: 15px; font-size: 14px; }
         .cronometro-info div { flex: 1; }
         .cronometro-info strong { display: block; font-size: 18px; margin-bottom: 5px; }
         .cronometro-botoes { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px; }
@@ -228,7 +229,6 @@
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script type="module" src="Script.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -242,32 +242,6 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-
-        // AQUI COMEÇA A PONTE CORRIGIDA
-        window.fs = {
-            loadInitialData: async () => {
-                // Verifica se o Firebase já carregou
-                if (typeof firebase === 'undefined') {
-                    console.error("Firebase ainda não carregou!");
-                    return;
-                }
-                const db = firebase.firestore();
-                
-                const doc = await db.collection("competicao").doc("stats").get();
-                if (doc.exists) {
-                    const dados = doc.data();
-                    window.dispatchEvent(new CustomEvent('firestorePlayersUpdated', { detail: dados }));
-                }
-                window.dispatchEvent(new CustomEvent('firestoreInitialDataLoaded'));
-            },
-            
-            saveAllPlayers: async (dados) => {
-                if (typeof firebase === 'undefined') return;
-                const db = firebase.firestore();
-                await db.collection("competicao").doc("stats").set(dados);
-            }
-        };
-        // AQUI TERMINA A PONTE
     </script>
 </head>
 <body>
@@ -353,6 +327,10 @@
                 <div id="telaEquipes" class="tela page-shell">
                     <div class="page-hero"><div><h2>Equipes</h2><p>Cards com organização visual de cada equipe e seus jogadores.</p></div><div class="hero-badge">🛡 Gerenciamento</div></div>
                     <div id="containerEquipesGerenciamento" class="grid-jogadores"></div>
+                <div class="secao-gerenciamento" style="margin-top:20px;">
+                    <h3>Reservas</h3>
+                    <div id="lista-reservas" class="lista-gerenciamento"></div>
+                </div>
                 </div>
 
                 <div id="telaPartidas" class="tela page-shell">
@@ -364,7 +342,7 @@
                         <div class="config-opcao"><input type="checkbox" id="primeiraPartida" class="config-checkbox" data-admin-control><label class="config-label">📌 Primeira partida (3 gols)</label></div>
                         <div class="config-opcao"><input type="checkbox" id="encerramentoAutomatico" class="config-checkbox" checked data-admin-control><label class="config-label">🏁 Encerramento automático</label></div>
                         <div class="section-header"><h3>Ações</h3><div class="chip">▶</div></div>
-                        <button class="btn-green" onclick="iniciarPartida()" data-admin-control>▶ Começar partida</button>
+                        <button class="btn-green" onclick="iniciarPartida()">▶ Começar partida</button>
                         <button class="btn-blue" onclick="mostrarTela('dashboard')">← Voltar</button>
                     </div>
                     <div class="cronometro-container">
@@ -1000,17 +978,39 @@
                 menu: 'telaDashboard'
             };
 
+            const titulos = {
+                dashboard: ['FUTIB Dashboard', 'Competição ativa • Atualização em tempo real'],
+                jogadores: ['Jogadores', 'Visão centralizada de todos os jogadores cadastrados'],
+                equipes: ['Equipes', 'Gerencie equipes, reservas e alterações instantâneas'],
+                partidas: ['Partidas', 'Controle limpo do placar, cronômetro e eventos ao vivo'],
+                estatisticas: ['Estatísticas', 'Ranking e performances atualizados automaticamente'],
+                relatorios: ['Relatórios', 'Visão consolidada das partidas e relatórios do dia'],
+                historico: ['Histórico', 'Partidas e competições finalizadas no sistema'],
+                admin: ['Painel Administrativo', 'Configurações, resets e controle avançado']
+            };
+
             document.querySelectorAll('.tela').forEach(el => el.classList.remove('ativa'));
             const idTela = mapaTelas[nomeTela] || nomeTela;
             const telaAlvo = document.getElementById(idTela);
             if (telaAlvo) {
                 telaAlvo.classList.add('ativa');
+                telaAlvo.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
             document.querySelectorAll('.nav-item').forEach(botao => {
                 const view = botao.getAttribute('data-view');
                 botao.classList.toggle('active', view === nomeTela);
             });
+
+            const topo = titulos[nomeTela];
+            if (topo) {
+                const title = document.getElementById('topbarTitle');
+                const subtitle = document.getElementById('topbarSubtitle');
+                if (title) title.textContent = topo[0];
+                if (subtitle) subtitle.textContent = topo[1];
+            }
+
+            atualizarInterfacePorPermissao();
         }
 
         function atualizarInterfacePorPermissao() {
@@ -1106,13 +1106,15 @@
         }
 
         function obterJogadoresPorEquipe() {
-            const equipes = {};
+            const equipes = { 'Sem equipe': [] };
             obterNomesEquipes().forEach(nomeEquipe => {
                 equipes[nomeEquipe] = [];
             });
             Object.keys(jogadoresStats).forEach(nome => {
-                const equipe = jogadoresStats[nome].equipe || '';
-                if (equipes[equipe]) {
+                const equipe = jogadoresStats[nome].equipe || 'Sem equipe';
+                if (!equipes[equipe]) {
+                    equipes['Sem equipe'].push(nome);
+                } else {
                     equipes[equipe].push(nome);
                 }
             });
@@ -1175,13 +1177,18 @@
             const grid = document.getElementById('gridJogadores');
             if (!grid) return;
             grid.innerHTML = '';
-            
+
             const equipes = obterJogadoresPorEquipe();
-            
+            const totalJogadores = Object.keys(jogadoresStats).length;
+            if (totalJogadores === 0) {
+                grid.innerHTML = '<div class="empty-state">Nenhum jogador cadastrado ainda. Ative o modo administrador e adicione jogadores.</div>';
+                return;
+            }
+
             Object.keys(equipes).forEach(equipe => {
                 if (equipes[equipe].length > 0) {
-                    grid.innerHTML += `<div class="secao-equipe"><h3>${escapeHtml(equipe)} (${equipes[equipe].length}/3)</h3><div class="jogadores-equipe">`;
-                    
+                    grid.innerHTML += `<div class="secao-equipe"><h3>${escapeHtml(equipe)} (${equipes[equipe].length})</h3><div class="jogadores-equipe">`;
+
                     equipes[equipe].forEach(nome => {
                         const p = normalizarJogador(nome, jogadoresStats[nome]);
                         const isSelected = selecionados.includes(nome);
@@ -1196,7 +1203,7 @@
                             </div>
                         </div>`;
                     });
-                    
+
                     grid.innerHTML += `</div></div>`;
                 }
             });
@@ -1265,18 +1272,21 @@
         }
 
         function iniciarJogo() {
-            if (!verificarPermissao('organização da pelada')) return;
-
             if (selecionados.length === 0) {
                 alert("Selecione pelo menos um jogador!");
                 return;
             }
 
+            renderizarPlacarPartida();
+            atualizarCronometroDisplay();
             mostrarTela('partidas');
         }
 
         function iniciarPartida() {
-            if (!verificarPermissao('início de partida')) return;
+            if (selecionados.length === 0) {
+                alert('Selecione pelo menos um jogador antes de iniciar a partida.');
+                return;
+            }
 
             // Carregar configurações
             const duracaoInput = document.getElementById('duracao');
@@ -1302,7 +1312,7 @@
                 }
             }
             
-            // Inicializar cronômetro
+            // Inicializar partida
             selecionadosPartidaAtual = [...selecionados];
             tempoRestante = configPartida.duracao * 60;
             tempoAcrescimos = 0;
@@ -1311,23 +1321,17 @@
             cronometroRodando = false;
             cronometroPausado = false;
             partidaEncerrada = false;
-            
-            // Registrar evento de início
+
             eventosPartida.push({
                 tipo: 'inicio',
                 tempo: '00:00',
                 descricao: 'Início da partida'
             });
-            
-            // Renderizar placar
-            const placar = document.getElementById('placarEquipes');
-            placar.innerHTML = '';
-            
+
             renderizarPlacarPartida();
-            
-            // Limpar e atualizar display
             atualizarCronometroDisplay();
             mostrarTela('partidas');
+            iniciarCronometro();
         }
 
         function formatarTempo(segundos) {
@@ -1745,6 +1749,7 @@
                 console.error('Erro ao salvar no Firestore:', e);
             }
             renderizarDashboardEstatisticas();
+            atualizarInterfacePorPermissao();
         }
         async function resetarTudo() { 
             if (!verificarPermissao('reset do sistema')) return;
@@ -1809,6 +1814,15 @@
             const container = document.getElementById('containerEquipesGerenciamento');
             if (!container) return;
             container.innerHTML = '';
+
+            if (Object.keys(jogadoresStats).length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhum jogador cadastrado ainda. Abra o painel administrativo para iniciar o cadastro e montar equipes.</div>';
+                const listaReservas = document.getElementById('lista-reservas');
+                if (listaReservas) {
+                    listaReservas.innerHTML = '<p style="color: #999; text-align: center;">Sem jogadores reservas</p>';
+                }
+                return;
+            }
             
             obterNomesEquipes().forEach(nomEquipe => {
                 const secao = document.createElement('div');
